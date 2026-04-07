@@ -247,7 +247,9 @@ window.hacerPedido = async function(){
         timestamp: Date.now()
     });
 
-    alert("Pedido enviado");
+    alert("Pedido enviado a cafeteria");
+
+    await actualizarHorarios();
 }
 
     async function actualizarHorarios() {
@@ -288,7 +290,7 @@ window.actualizarPedidos = function() {
 
         let tiempo = (index + 1) * 5;
     
-        div.innerHTML = `;
+        div.innerHTML = `
         <b>${p.nombre}</b><br>
         ${p.producto} ${p.extras ? "(" + p.extras.join(", ") + ")" : ""}<br>
         Estado: ${p.estado}<br>
@@ -296,14 +298,11 @@ window.actualizarPedidos = function() {
         Tiempo estimado: ${tiempo} min<br>
         <button onclick="cancelar(${index})">Cancelar</button>`
         contenedor.appendChild(div)
-}};
-        
-    
+    });
+};
 
-    document.getElementById("estadoServicio").innerHTML = 
-    Pedidos en cola: ${pedidos.length} <br>
-    Tiempo estimado: ${pedidos.length * 5} min
-    `;
+        
+
 
 
 
