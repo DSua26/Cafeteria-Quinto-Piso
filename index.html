@@ -227,6 +227,12 @@ window.mostrarFormulario = function () {
     document.getElementById("formulario").style.display = "block";
 }
 
+function actualizarEstado(total) {
+    document.getElementById("estadoServicio").innerHTML = `
+        Pedidos en cola: ${total} <br>
+        Tiempo estimado: ${total * 5} min
+    `;
+}
 
 window.hacerPedido = async function(){
     let nombre = document.getElementById("nombre").value;
@@ -249,7 +255,7 @@ window.hacerPedido = async function(){
     const snapshot = await getDocs(collection(db, "pedidos"));
 
     let horariosOcupados = [];
-
+   
     snapshot.forEach(doc => {
         let data = doc.data();
         if(data.tiempo && data.tiempo !== "Lo más pronto posible"){
@@ -266,8 +272,10 @@ window.hacerPedido = async function(){
             option.style.display = "none";
         }
     }
+         let total = snapshot.size;
+        actualizarEstado(total);
 }
-    actualizarHorarios();
+   await actualizarHorarios();
     
 
 window.actualizarPedidos = function() {
@@ -282,12 +290,12 @@ window.actualizarPedidos = function() {
 
         div.innerHTML = `
         <b>${p.nombre}</b><br>
-        ${p.producto} ${p.extras ? "("+p.extras.join(", ")+")" : ""}<br>
+        ${p.producto} ${p.extras.length ? "("+p.extras.join(", ")+")" : ""}<br>
         Estado: ${p.estado}<br>
         Turno: ${index + 1}<br>
         Tiempo estimado: ${tiempo} min<br>
         <button onclick="cancelar(${index})">Cancelar</button>
-        `;
+        ;
 
         contenedor.appendChild(div);
     });
@@ -295,7 +303,7 @@ window.actualizarPedidos = function() {
     document.getElementById("estadoServicio").innerHTML = `
     Pedidos en cola: ${pedidos.length} <br>
     Tiempo estimado: ${pedidos.length * 5} min
-    `;
+    ;
 }
 
 function cancelar(i){
