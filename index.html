@@ -129,7 +129,7 @@ function mostrarFormulario(){
     document.getElementById("formulario").style.display = "block";
 }
 
-async function hacerPedido(){
+window.hacerPedido = async function(){
 
     let nombre = document.getElementById("nombre").value;
     let producto = document.getElementById("producto").value;
