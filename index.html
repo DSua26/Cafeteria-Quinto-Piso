@@ -76,9 +76,91 @@ section {
 <section>
     <h2>🛒 Pedidos</h2>
 
-    <a class="button" href="#">Hacer pedido</a>
+    <button class="button" onclick="mostrarFormulario()">Hacer pedido</button>
+
+    <div id="formulario" style="display:none; margin-top:20px;" class="card">
+
+<h3>Nuevo Pedido</h3>
+
+<input id="nombre" placeholder="Nombre y Apellido"><br><br>
+
+<input id="piso" placeholder="Piso"><br><br>
+
+<select id="zona">
+    <option>Oriente</option>
+    <option>Poniente</option>
+</select><br><br>
+
+<select id="producto">
+    <option>Molletes</option>
+    <option>Chilaquiles</option>
+    <option>Sandwich</option>
+    <option>Hot Dog</option>
+</select><br><br>
+
+<select id="entrega">
+    <option>Recoger en cafetería</option>
+    <option>Comer ahí</option>
+    <option>Entrega en oficina</option>
+</select><br><br>
+
+<button class="button" onclick="hacerPedido()">Confirmar pedido</button>
+
+</div>
+    
 </section>
 
+<section>
+    <h2>📦 Pedidos en curso</h2>
+    <div id="listaPedidos"></div>
+</section>
+
+<script>
+
+let pedidos = [];
+
+function mostrarFormulario(){
+    document.getElementById("formulario").style.display = "block";
+}
+
+function hacerPedido(){
+
+    let nombre = document.getElementById("nombre").value;
+    let producto = document.getElementById("producto").value;
+
+    let pedido = {
+        nombre: nombre,
+        producto: producto,
+        estado: "En preparación"
+    };
+
+    pedidos.push(pedido);
+
+    actualizarPedidos();
+}
+
+function actualizarPedidos(){
+
+    let contenedor = document.getElementById("listaPedidos");
+    contenedor.innerHTML = "";
+
+    pedidos.forEach((p, index)=>{
+
+        let div = document.createElement("div");
+        div.className = "card";
+
+        div.innerHTML = `
+        ${p.nombre} - ${p.producto} <br>
+        Estado: ${p.estado}
+        `;
+
+        contenedor.appendChild(div);
+
+    });
+}
+
+</script>
+    
 </body>
 
 </html>
