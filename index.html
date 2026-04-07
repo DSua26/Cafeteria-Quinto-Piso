@@ -99,13 +99,11 @@ section { padding: 20px; }
     <div id="listaPedidos"></div>
 </section>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    
-<script>
-
-const firebaseConfig = {
+    const firebaseConfig = {
   apiKey: "AIzaSyCTGbs7bpa-VPJWvaOFwO8HTmmXRHjEPmU",
   authDomain: "cafeteria-quinto-piso-88921.firebaseapp.com",
   projectId: "cafeteria-quinto-piso-88921",
@@ -114,6 +112,18 @@ const firebaseConfig = {
   appId: "1:1010904728833:web:d1494b6397289d6d6d8700",
   measurementId: "G-7X66GRSMGF"
 };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.db = db;
+  window.addDoc = addDoc;
+  window.collection = collection;
+  window.getDocs = getDocs;
+
+    
+<script>
+
     
 let pedidos = [];
 
@@ -121,18 +131,20 @@ function mostrarFormulario(){
     document.getElementById("formulario").style.display = "block";
 }
 
-function hacerPedido(){
+async function hacerPedido(){
+
     let nombre = document.getElementById("nombre").value;
     let producto = document.getElementById("producto").value;
-    let extrasSelect = document.getElementById("extras");
-    let extras = Array.from(extrasSelect.selectedOptions).map(o => o.value);
 
-    let pedido = {
-        nombre,
-        producto,
-        extras,
-        estado: "En preparación"
-    };
+    await addDoc(collection(db, "pedidos"), {
+        nombre: nombre,
+        producto: producto,
+        estado: "En preparación",
+        timestamp: Date.now()
+    });
+
+    alert("Pedido enviado");
+}
 
     pedidos.push(pedido);
 
