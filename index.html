@@ -275,7 +275,7 @@ window.hacerPedido = async function(){
          let total = snapshot.size;
         actualizarEstado(total);
 }
-   await actualizarHorarios();
+
     
 
 window.actualizarPedidos = function() {
@@ -287,24 +287,24 @@ window.actualizarPedidos = function() {
         div.className = "card";
 
         let tiempo = (index + 1) * 5;
-
-        div.innerHTML = `
+    
+        div.innerHTML = `;
         <b>${p.nombre}</b><br>
         ${p.producto} ${p.extras ? "(" + p.extras.join(", ") + ")" : ""}<br>
         Estado: ${p.estado}<br>
         Turno: ${index + 1}<br>
         Tiempo estimado: ${tiempo} min<br>
-        <button onclick="cancelar(${index})">Cancelar</button>
-        `;
+        <button onclick="cancelar(${index})">Cancelar</button>`
+        contenedor.appendChild(div)
+}};
+        
+    
 
-        contenedor.appendChild(div);
-    });
-
-    document.getElementById("estadoServicio").innerHTML = `
+    document.getElementById("estadoServicio").innerHTML = 
     Pedidos en cola: ${pedidos.length} <br>
     Tiempo estimado: ${pedidos.length * 5} min
     `;
-}
+
 
 
 function cancelar(i){
