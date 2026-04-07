@@ -5,43 +5,14 @@
 <title>Cafetería El Quinto Piso</title>
 
 <style>
-
-body {
-    font-family: Arial;
-    margin: 0;
-    background-color: #f5f5f5;
-}
-
-header {
-    background-color: #2c2c2c;
-    color: white;
-    padding: 20px;
-    text-align: center;
-}
-
-section {
-    padding: 20px;
-}
-
-.card {
-    background: white;
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 10px;
-}
-
-.button {
-    background-color: #8B0000;
-    color: white;
-    padding: 10px;
-    text-decoration: none;
-    border-radius: 5px;
-}
-
-.estado {
-    font-weight: bold;
-}
-
+body { font-family: Arial; margin: 0; background-color: #f5f5f5; }
+header { background-color: #2c2c2c; color: white; padding: 20px; text-align: center; }
+section { padding: 20px; }
+.card { background: white; padding: 10px; margin: 8px 0; border-radius: 10px; }
+.button { background-color: #8B0000; color: white; padding: 10px; border-radius: 5px; border: none; }
+.estado { font-weight: bold; }
+.menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.small { font-size: 14px; }
 </style>
 
 </head>
@@ -56,20 +27,22 @@ section {
 <section>
     <h2>📋 Menú</h2>
 
-    <div class="card">Chilaquiles verdes</div>
-    <div class="card">Chilaquiles rojos</div>
-    <div class="card">Sándwich integral</div>
-    <div class="card">Té</div>
-    <div class="card">Coca Cola</div>
+    <div class="menu-grid">
+        <div class="card">Molletes</div>
+        <div class="card">Chilaquiles</div>
+        <div class="card">Sandwich</div>
+        <div class="card">Hot Dog</div>
+        <div class="card">Sincronizadas</div>
+        <div class="card">Tortas</div>
+    </div>
 </section>
 
 <section>
     <h2>⏱ Estado del servicio</h2>
 
-    <div class="card estado">
-        Pedidos en cola: 3 <br>
-        Empleados disponibles: 1 <br>
-        Tiempo estimado: 12 minutos
+    <div class="card estado" id="estadoServicio">
+        Pedidos en cola: 0 <br>
+        Tiempo estimado: 0 min
     </div>
 </section>
 
@@ -80,34 +53,45 @@ section {
 
     <div id="formulario" style="display:none; margin-top:20px;" class="card">
 
-<h3>Nuevo Pedido</h3>
+    <h3>Nuevo Pedido</h3>
 
-<input id="nombre" placeholder="Nombre y Apellido"><br><br>
+    <input id="nombre" placeholder="Nombre y Apellido"><br><br>
+    <input id="piso" placeholder="Piso"><br><br>
 
-<input id="piso" placeholder="Piso"><br><br>
+    <select id="zona">
+        <option>Oriente</option>
+        <option>Poniente</option>
+    </select><br><br>
 
-<select id="zona">
-    <option>Oriente</option>
-    <option>Poniente</option>
-</select><br><br>
+    <select id="producto">
+        <option>Molletes</option>
+        <option>Chilaquiles</option>
+        <option>Sandwich</option>
+        <option>Hot Dog</option>
+    </select><br><br>
 
-<select id="producto">
-    <option>Molletes</option>
-    <option>Chilaquiles</option>
-    <option>Sandwich</option>
-    <option>Hot Dog</option>
-</select><br><br>
+    <select id="extras" multiple class="small">
+        <option>Jamón</option>
+        <option>Tocino</option>
+        <option>Chorizo</option>
+        <option>Queso</option>
+    </select><br><br>
 
-<select id="entrega">
-    <option>Recoger en cafetería</option>
-    <option>Comer ahí</option>
-    <option>Entrega en oficina</option>
-</select><br><br>
+    <select id="entrega">
+        <option>Recoger en cafetería</option>
+        <option>Comer ahí</option>
+        <option>Entrega en oficina</option>
+    </select><br><br>
 
-<button class="button" onclick="hacerPedido()">Confirmar pedido</button>
+    <select id="tiempo">
+        <option>Lo antes posible</option>
+        <option>En 30 minutos</option>
+        <option>En 1 hora</option>
+    </select><br><br>
 
-</div>
-    
+    <button class="button" onclick="hacerPedido()">Confirmar pedido</button>
+
+    </div>
 </section>
 
 <section>
@@ -116,7 +100,6 @@ section {
 </section>
 
 <script>
-
 let pedidos = [];
 
 function mostrarFormulario(){
@@ -124,13 +107,15 @@ function mostrarFormulario(){
 }
 
 function hacerPedido(){
-
     let nombre = document.getElementById("nombre").value;
     let producto = document.getElementById("producto").value;
+    let extrasSelect = document.getElementById("extras");
+    let extras = Array.from(extrasSelect.selectedOptions).map(o => o.value);
 
     let pedido = {
-        nombre: nombre,
-        producto: producto,
+        nombre,
+        producto,
+        extras,
         estado: "En preparación"
     };
 
@@ -140,27 +125,38 @@ function hacerPedido(){
 }
 
 function actualizarPedidos(){
-
     let contenedor = document.getElementById("listaPedidos");
     contenedor.innerHTML = "";
 
     pedidos.forEach((p, index)=>{
-
         let div = document.createElement("div");
         div.className = "card";
 
+        let tiempo = (index + 1) * 5;
+
         div.innerHTML = `
-        ${p.nombre} - ${p.producto} <br>
-        Estado: ${p.estado}
+        <b>${p.nombre}</b><br>
+        ${p.producto} ${p.extras.length ? "("+p.extras.join(", ")+")" : ""}<br>
+        Estado: ${p.estado}<br>
+        Turno: ${index + 1}<br>
+        Tiempo estimado: ${tiempo} min<br>
+        <button onclick="cancelar(${index})">Cancelar</button>
         `;
 
         contenedor.appendChild(div);
-
     });
+
+    document.getElementById("estadoServicio").innerHTML = `
+    Pedidos en cola: ${pedidos.length} <br>
+    Tiempo estimado: ${pedidos.length * 5} min
+    `;
 }
 
+function cancelar(i){
+    pedidos.splice(i,1);
+    actualizarPedidos();
+}
 </script>
-    
-</body>
 
+</body>
 </html>
