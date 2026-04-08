@@ -198,185 +198,8 @@ section { padding: 20px; }
     <div id="listaPedidos"></div>
 </section>
 
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import {getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc 
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-  apiKey: "AIzaSyCTGbs7bpa-VPJWvaOFwO8HTmmXRHjEPmU",
-  authDomain: "cafeteria-quinto-piso-88921.firebaseapp.com",
-  projectId: "cafeteria-quinto-piso-88921",
-  storageBucket: "cafeteria-quinto-piso-88921.firebasestorage.app",
-  messagingSenderId: "1010904728833",
-  appId: "1:1010904728833:web:d1494b6397289d6d6d8700"
-};
-
-const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-    const q = query(collection(db, "pedidos"), orderBy("timestamp", "asc"));
-    
-onSnapshot(q, (snapshot) => {
-    const contenedor = document.getElementById("listaPedidos");
-    const estadoDiv = document.getElementById("estadoServicio");
-    
-    contenedor.innerHTML = ""; // Limpiamos para no duplicar
-    let total = snapshot.size;
-
-    estadoDiv.innerHTML = `
-        <div style="background: #f0f0f0; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
-          <strong>Estado del Servicio:</strong><br>
-          Pedidos en cola: ${total} | Tiempo estimado: ${total * 5} min
-        </div>
-    `;
-
-onSnapshot(collection(db, "pedidos"), (snapshot) => {
-    const contenedor = document.getElementById("listaPedidos");
-    const estadoDiv = document.getElementById("estadoServicio");
-    
-    contenedor.innerHTML = ""; // Limpiar antes de llenar
-    let total = snapshot.size;
-
-    // Actualizar el cuadrito de arriba
-    estadoDiv.innerHTML = `
-        <strong>Pedidos totales en cola:</strong> ${total} <br>
-        <strong>Tiempo de espera estimado:</strong> ${total * 5} min
-    `;
-
-    // Si no hay pedidos, avisar
-    if (total === 0) {
-        contenedor.innerHTML = "<p>No hay pedidos pendientes. ¡Sé el primero!</p>";
-        return;
-    }
-
-    // Dibujar cada pedido que está en la base de datos
-    snapshot.forEach((docSnap) => {
-        const p = docSnap.data();
-        const id = docSnap.id;
-        const div = document.createElement("div");
-        
-        // Estilo de la tarjeta (Card)
-        div.style = "border: 1px solid #ddd; padding: 15px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); background: white;";
-
-        div.innerHTML = `
-            <div style="display: flex; justify-content: space-between;">
-                <b>👤 ${p.nombre}</b>
-                <span style="color: #28a745; font-weight: bold;">${p.estado}</span>
-            </div>
-            <p style="margin: 5px 0;">☕ Producto: ${p.producto}</p>
-            <p style="margin: 5px 0; font-size: 0.9em; color: #666;">🕒 Programado para: <strong>${p.tiempo}</strong></p>
-            <button onclick="cancelarPedido('${id}')" style="background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
-                Cancelar Pedido
-            </button>
-        `;
-        contenedor.appendChild(div);
-    });
-});
-    
-    
-    const pedidos = [];
-    let horariosOcupados = [];
-
-    snapshot.forEach((doc) => {
-      let data = doc.data();
-      pedidos.push({ id: doc.id, ...data });
-      
-      if(data.tiempo && data.tiempo !== "Lo más pronto posible"){
-          horariosOcupados.push(data.tiempo);
-      }
-    });
-
-    renderizarPedidos(pedidos);
-    actualizarEstado(pedidos.length);
-    bloquearHorariosOcupados(horariosOcupados);
-  });
-    
-
-function renderizarPedidos(lista) {
-    const contenedor = document.getElementById("listaPedidos");
-    contenedor.innerHTML = "";
-
-    snapshot.forEach((docSnap, index) => {
-      const p = docSnap.data();
-      const id = docSnap.id;
-      const card = document.createElement("div");
-      card.className = "card";
-      card.style = "border: 1px solid #ccc; padding: 10px; margin: 5px; border-radius: 5px; background: white;";
-
-      card.innerHTML = `
-        <b>👤 ${p.nombre}</b><br>
-        ☕ ${p.producto}<br>
-        🕒 Hora: ${p.tiempo}<br>
-        📍 Turno: #${index + 1}<br>
-        <button onclick="cancelarPedido('${id}')" style="color: red; margin-top: 5px;">Cancelar</button>
-      `;
-      contenedor.appendChild(card);
-    });
-  });
-
-    
-function actualizarEstado(total) {
-    const el = document.getElementById("estadoServicio");
-    if(el) {
-      el.innerHTML = `
-          <strong>Pedidos en cola:</strong> ${total} <br>
-          <strong>Tiempo de espera:</strong> ${total * 5} min
-      `;
-    }
-  }
-
-
-function bloquearHorariosOcupados(ocupados) {
-    const select = document.getElementById("tiempo");
-    if(!select) return;
-    
-    for(let i = 0; i < select.options.length; i++){
-        let option = select.options[i];
-        // Resetear visibilidad primero
-        option.style.display = "block";
-        if(ocupados.includes(option.value)){
-            option.style.display = "none";
-        }
-    }
-  }
-
-    
-
-window.hacerPedido = async function(){
-    const nombre = document.getElementById("nombre").value;
-    const producto = document.getElementById("producto").value;
-    const tiempo = document.getElementById("tiempo").value;
-
-    if(!nombre || !producto) return alert("Llena todos los campos");
-
-    try {
-      await addDoc(collection(db, "pedidos"), {
-        nombre,
-        producto,
-        tiempo,
-        estado: "En preparación",
-        timestamp: Date.now()
-      });
-      alert("¡Pedido enviado!");
-      document.getElementById("formulario").style.display = "none";
-    } catch (e) {
-      console.error("Error al pedir:", e);
-    }
-  };
-
-
-window.cancelarPedido = async function(id) {
-    if(confirm("¿Seguro que quieres cancelar tu pedido?")) {
-      await deleteDoc(doc(db, "pedidos", id));
-    }
-  };
-
-window.mostrarFormulario = () => {
-    document.getElementById("formulario").style.display = "block";
-  };
-
-<hr> <div id="seccion-pedidos" style="padding: 20px; font-family: sans-serif;">
+<hr> 
+<div id="seccion-pedidos" style="padding: 20px; font-family: sans-serif;">
     <h2 style="text-align: center;">📋 Pedidos en Curso</h2>
     
     <div id="estadoServicio" style="background: #f8f9fa; border-left: 5px solid #007bff; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
@@ -386,70 +209,136 @@ window.mostrarFormulario = () => {
     <div id="listaPedidos" style="display: grid; gap: 15px;">
         </div>
 </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { 
+    getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc 
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCTGbs7bpa-VPJWvaOFwO8HTmmXRHjEPmU",
+    authDomain: "cafeteria-quinto-piso-88921.firebaseapp.com",
+    projectId: "cafeteria-quinto-piso-88921",
+    storageBucket: "cafeteria-quinto-piso-88921.firebasestorage.app",
+    messagingSenderId: "1010904728833",
+    appId: "1:1010904728833:web:d1494b6397289d6d6d8700"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // --- MOTOR EN TIEMPO REAL ---
+  const q = query(collection(db, "pedidos"), orderBy("timestamp", "asc"));
+
+  onSnapshot(q, (snapshot) => {
+    const pedidosArr = [];
+    const horariosOcupados = [];
     
-
-    async function actualizarHorarios() {
-
-    const snapshot = await getDocs(collection(db, "pedidos"));
-
-    let horariosOcupados = [];
-   
-    snapshot.forEach(doc => {
-        let data = doc.data();
-        if(data.tiempo && data.tiempo !== "Lo más pronto posible"){
-            horariosOcupados.push(data.tiempo);
-        }
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      pedidosArr.push({ id: doc.id, ...data });
+      
+      // Lógica de horarios ocupados
+      if(data.tiempo && data.tiempo !== "Lo más pronto posible"){
+          horariosOcupados.push(data.tiempo);
+      }
     });
 
-    let select = document.getElementById("tiempo");
+    renderizarPedidos(pedidosArr);
+    actualizarEstado(pedidosArr.length);
+    bloquearHorariosOcupados(horariosOcupados);
+  });
 
-    for(let i = 0; i < select.options.length; i++){
-        let option = select.options[i];
+  // --- FUNCIONES DE APOYO ---
 
-        if(horariosOcupados.includes(option.value)){
-            option.style.display = "none";
-        }
-    }
-         let total = snapshot.size;
-        actualizarEstado(total);
-}
-
-    
-
-window.actualizarPedidos = function() {
-    let contenedor = document.getElementById("listaPedidos");
+  function renderizarPedidos(lista) {
+    const contenedor = document.getElementById("listaPedidos");
     contenedor.innerHTML = "";
 
-    pedidos.forEach((p, index)=>{
-        let div = document.createElement("div");
-        div.className = "card";
+    if (lista.length === 0) {
+      contenedor.innerHTML = "<p style='text-align:center;'>No hay pedidos pendientes.</p>";
+      return;
+    }
 
-        let tiempo = (index + 1) * 5;
-    
-        div.innerHTML = `
-        <b>${p.nombre}</b><br>
-        ${p.producto} ${p.extras ? "(" + p.extras.join(", ") + ")" : ""}<br>
-        Estado: ${p.estado}<br>
-        Turno: ${index + 1}<br>
-        Tiempo estimado: ${tiempo} min<br>
-        <button onclick="cancelar(${index})">Cancelar</button>`
-        contenedor.appendChild(div)
+    lista.forEach((p, index) => {
+      const div = document.createElement("div");
+      div.style = "border: 1px solid #ddd; padding: 15px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); background: white; color: #333;";
+
+      div.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <b>👤 ${p.nombre}</b>
+            <span style="background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 4px; font-size: 0.8em;">${p.estado}</span>
+        </div>
+        <p style="margin: 8px 0;">☕ <b>Producto:</b> ${p.producto}</p>
+        <p style="margin: 4px 0; font-size: 0.9em; color: #666;">🕒 Programado: ${p.tiempo}</p>
+        <p style="margin: 4px 0; font-size: 0.9em; color: #007bff;">🔢 Turno: #${index + 1} (Espera: ${ (index + 1) * 5 } min)</p>
+        <button onclick="cancelarPedido('${p.id}')" style="background: #ff4d4d; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px;">
+            Cancelar Pedido
+        </button>
+      `;
+      contenedor.appendChild(div);
     });
-};
+  }
 
+  function actualizarEstado(total) {
+    const el = document.getElementById("estadoServicio");
+    if(el) {
+      el.innerHTML = `
+          <strong>Pedidos totales en cola:</strong> ${total} <br>
+          <strong>Tiempo de espera estimado:</strong> ${total * 5} min
+      `;
+    }
+  }
+
+  function bloquearHorariosOcupados(ocupados) {
+    const select = document.getElementById("tiempo");
+    if(!select) return;
     
+    for(let i = 0; i < select.options.length; i++){
+        let opt = select.options[i];
+        // Solo bloqueamos los que no son "Lo más pronto posible"
+        if(opt.value !== "Lo más pronto posible") {
+            opt.disabled = ocupados.includes(opt.value);
+            opt.style.color = opt.disabled ? "#ccc" : "#000";
+        }
+    }
+  }
 
+  // --- FUNCIONES GLOBALES (Window) ---
 
-function cancelar(i){
-    pedidos.splice(i,1);
-    actualizarPedidos();
-    actualizarHorarios();
-}
+  window.hacerPedido = async function() {
+    const nombre = document.getElementById("nombre").value;
+    const producto = document.getElementById("producto").value;
+    const tiempo = document.getElementById("tiempo").value;
+
+    if(!nombre || !producto) return alert("Por favor, completa los campos.");
+
+    try {
+      await addDoc(collection(db, "pedidos"), {
+        nombre,
+        producto,
+        tiempo,
+        estado: "En preparación",
+        timestamp: Date.now()
+      });
+      alert("¡Pedido enviado correctamente!");
+      document.getElementById("formulario").style.display = "none";
+    } catch (e) {
+      alert("Error al enviar: " + e.message);
+    }
+  };
+
+  window.cancelarPedido = async function(id) {
+    if(confirm("¿Seguro que quieres eliminar este pedido?")) {
+      await deleteDoc(doc(db, "pedidos", id));
+    }
+  };
+
+  window.mostrarFormulario = () => {
+    document.getElementById("formulario").style.display = "block";
+  };
 </script>
-
-<div id="estadoServicio" class="estado-container"></div>
-<h2>Pedidos en curso</h2>
-<div id="listaPedidos"></div>
     
 </body>
 </html>
