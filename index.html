@@ -216,41 +216,108 @@ section { padding: 20px; }
 const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  window.db = db;
-  window.addDoc = addDoc;
-  window.collection = collection;
- window.getDocs = getDocs;
-    
-let pedidos = [];
+    const q = query(collection(db, "pedidos"), orderBy("timestamp", "asc"));
+onSnapshot(q, (snapshot) => {
+    const pedidos = [];
+    let horariosOcupados = [];
 
-window.mostrarFormulario = function () {
-    document.getElementById("formulario").style.display = "block";
-}
-
-function actualizarEstado(total) {
-    document.getElementById("estadoServicio").innerHTML = `
-        Pedidos en cola: ${total} <br>
-        Tiempo estimado: ${total * 5} min
-    `;
-}
-
-window.hacerPedido = async function(){
-    let nombre = document.getElementById("nombre").value;
-    let producto = document.getElementById("producto").value;
-    let tiempo = document.getElementById("tiempo").value;
-
-    await addDoc(collection(db, "pedidos"), {
-        nombre: nombre,
-        producto: producto,
-        tiempo: tiempo,
-        estado: "En preparación",
-        timestamp: Date.now()
+    snapshot.forEach((doc) => {
+      let data = doc.data();
+      pedidos.push({ id: doc.id, ...data });
+      
+      if(data.tiempo && data.tiempo !== "Lo más pronto posible"){
+          horariosOcupados.push(data.tiempo);
+      }
     });
 
-    alert("Pedido enviado a cafeteria");
+    renderizarPedidos(pedidos);
+    actualizarEstado(pedidos.length);
+    bloquearHorariosOcupados(horariosOcupados);
+  });
+    
 
-    await actualizarHorarios();
-}
+function renderizarPedidos(lista) {
+    const contenedor = document.getElementById("listaPedidos");
+    contenedor.innerHTML = "";
+
+    lista.forEach((p, index) => {
+      const div = document.createElement("div");
+      div.className = "card";
+      const tiempoEst = (index + 1) * 5;
+
+      div.innerHTML = `
+        <b>${p.nombre}</b><br>
+        🍴 ${p.producto}<br>
+        ⏳ Hora: ${p.tiempo}<br>
+        📦 Estado: <span class="badge">${p.estado}</span><br>
+        🔢 Turno: ${index + 1} (${tiempoEst} min aprox)<br>
+        <button onclick="cancelarPedido('${p.id}')" style="background:#ff4444; color:white; border:none; border-radius:5px; cursor:pointer;">Cancelar</button>
+      `;
+      contenedor.appendChild(div);
+    });
+  }
+
+    
+function actualizarEstado(total) {
+    const el = document.getElementById("estadoServicio");
+    if(el) {
+      el.innerHTML = `
+          <strong>Pedidos en cola:</strong> ${total} <br>
+          <strong>Tiempo de espera:</strong> ${total * 5} min
+      `;
+    }
+  }
+
+
+function bloquearHorariosOcupados(ocupados) {
+    const select = document.getElementById("tiempo");
+    if(!select) return;
+    
+    for(let i = 0; i < select.options.length; i++){
+        let option = select.options[i];
+        // Resetear visibilidad primero
+        option.style.display = "block";
+        if(ocupados.includes(option.value)){
+            option.style.display = "none";
+        }
+    }
+  }
+
+    
+
+window.hacerPedido = async function(){
+    const nombre = document.getElementById("nombre").value;
+    const producto = document.getElementById("producto").value;
+    const tiempo = document.getElementById("tiempo").value;
+
+    if(!nombre || !producto) return alert("Llena todos los campos");
+
+    try {
+      await addDoc(collection(db, "pedidos"), {
+        nombre,
+        producto,
+        tiempo,
+        estado: "En preparación",
+        timestamp: Date.now()
+      });
+      alert("¡Pedido enviado!");
+      document.getElementById("formulario").style.display = "none";
+    } catch (e) {
+      console.error("Error al pedir:", e);
+    }
+  };
+
+
+window.cancelarPedido = async function(id) {
+    if(confirm("¿Seguro que quieres cancelar tu pedido?")) {
+      await deleteDoc(doc(db, "pedidos", id));
+    }
+  };
+
+window.mostrarFormulario = () => {
+    document.getElementById("formulario").style.display = "block";
+  };
+
 
     async function actualizarHorarios() {
 
@@ -301,9 +368,7 @@ window.actualizarPedidos = function() {
     });
 };
 
-        
-
-
+    
 
 
 function cancelar(i){
