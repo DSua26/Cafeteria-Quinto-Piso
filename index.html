@@ -201,7 +201,8 @@ section { padding: 20px; }
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import {getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc 
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
   apiKey: "AIzaSyCTGbs7bpa-VPJWvaOFwO8HTmmXRHjEPmU",
@@ -209,15 +210,71 @@ section { padding: 20px; }
   projectId: "cafeteria-quinto-piso-88921",
   storageBucket: "cafeteria-quinto-piso-88921.firebasestorage.app",
   messagingSenderId: "1010904728833",
-  appId: "1:1010904728833:web:d1494b6397289d6d6d8700",
-  measurementId: "G-7X66GRSMGF"
+  appId: "1:1010904728833:web:d1494b6397289d6d6d8700"
 };
 
 const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-
     const q = query(collection(db, "pedidos"), orderBy("timestamp", "asc"));
+    
 onSnapshot(q, (snapshot) => {
+    const contenedor = document.getElementById("listaPedidos");
+    const estadoDiv = document.getElementById("estadoServicio");
+    
+    contenedor.innerHTML = ""; // Limpiamos para no duplicar
+    let total = snapshot.size;
+
+    estadoDiv.innerHTML = `
+        <div style="background: #f0f0f0; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
+          <strong>Estado del Servicio:</strong><br>
+          Pedidos en cola: ${total} | Tiempo estimado: ${total * 5} min
+        </div>
+    `;
+
+onSnapshot(collection(db, "pedidos"), (snapshot) => {
+    const contenedor = document.getElementById("listaPedidos");
+    const estadoDiv = document.getElementById("estadoServicio");
+    
+    contenedor.innerHTML = ""; // Limpiar antes de llenar
+    let total = snapshot.size;
+
+    // Actualizar el cuadrito de arriba
+    estadoDiv.innerHTML = `
+        <strong>Pedidos totales en cola:</strong> ${total} <br>
+        <strong>Tiempo de espera estimado:</strong> ${total * 5} min
+    `;
+
+    // Si no hay pedidos, avisar
+    if (total === 0) {
+        contenedor.innerHTML = "<p>No hay pedidos pendientes. ¡Sé el primero!</p>";
+        return;
+    }
+
+    // Dibujar cada pedido que está en la base de datos
+    snapshot.forEach((docSnap) => {
+        const p = docSnap.data();
+        const id = docSnap.id;
+        const div = document.createElement("div");
+        
+        // Estilo de la tarjeta (Card)
+        div.style = "border: 1px solid #ddd; padding: 15px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); background: white;";
+
+        div.innerHTML = `
+            <div style="display: flex; justify-content: space-between;">
+                <b>👤 ${p.nombre}</b>
+                <span style="color: #28a745; font-weight: bold;">${p.estado}</span>
+            </div>
+            <p style="margin: 5px 0;">☕ Producto: ${p.producto}</p>
+            <p style="margin: 5px 0; font-size: 0.9em; color: #666;">🕒 Programado para: <strong>${p.tiempo}</strong></p>
+            <button onclick="cancelarPedido('${id}')" style="background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                Cancelar Pedido
+            </button>
+        `;
+        contenedor.appendChild(div);
+    });
+});
+    
+    
     const pedidos = [];
     let horariosOcupados = [];
 
@@ -240,22 +297,23 @@ function renderizarPedidos(lista) {
     const contenedor = document.getElementById("listaPedidos");
     contenedor.innerHTML = "";
 
-    lista.forEach((p, index) => {
-      const div = document.createElement("div");
-      div.className = "card";
-      const tiempoEst = (index + 1) * 5;
+    snapshot.forEach((docSnap, index) => {
+      const p = docSnap.data();
+      const id = docSnap.id;
+      const card = document.createElement("div");
+      card.className = "card";
+      card.style = "border: 1px solid #ccc; padding: 10px; margin: 5px; border-radius: 5px; background: white;";
 
-      div.innerHTML = `
-        <b>${p.nombre}</b><br>
-        🍴 ${p.producto}<br>
-        ⏳ Hora: ${p.tiempo}<br>
-        📦 Estado: <span class="badge">${p.estado}</span><br>
-        🔢 Turno: ${index + 1} (${tiempoEst} min aprox)<br>
-        <button onclick="cancelarPedido('${p.id}')" style="background:#ff4444; color:white; border:none; border-radius:5px; cursor:pointer;">Cancelar</button>
+      card.innerHTML = `
+        <b>👤 ${p.nombre}</b><br>
+        ☕ ${p.producto}<br>
+        🕒 Hora: ${p.tiempo}<br>
+        📍 Turno: #${index + 1}<br>
+        <button onclick="cancelarPedido('${id}')" style="color: red; margin-top: 5px;">Cancelar</button>
       `;
-      contenedor.appendChild(div);
+      contenedor.appendChild(card);
     });
-  }
+  });
 
     
 function actualizarEstado(total) {
@@ -318,6 +376,17 @@ window.mostrarFormulario = () => {
     document.getElementById("formulario").style.display = "block";
   };
 
+<hr> <div id="seccion-pedidos" style="padding: 20px; font-family: sans-serif;">
+    <h2 style="text-align: center;">📋 Pedidos en Curso</h2>
+    
+    <div id="estadoServicio" style="background: #f8f9fa; border-left: 5px solid #007bff; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+        Cargando estado del servicio...
+    </div>
+
+    <div id="listaPedidos" style="display: grid; gap: 15px;">
+        </div>
+</div>
+    
 
     async function actualizarHorarios() {
 
@@ -378,5 +447,9 @@ function cancelar(i){
 }
 </script>
 
+<div id="estadoServicio" class="estado-container"></div>
+<h2>Pedidos en curso</h2>
+<div id="listaPedidos"></div>
+    
 </body>
 </html>
