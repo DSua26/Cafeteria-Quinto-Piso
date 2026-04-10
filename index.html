@@ -11,10 +11,26 @@ section { padding: 20px; }
 .card { background: white; padding: 10px; margin: 8px 0; border-radius: 10px; }
 .button { background-color: #8B0000; color: white; padding: 10px; border-radius: 5px; border: none; }
 .estado { font-weight: bold; }
-.menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.menu-grid {display: grid;grid-template-columns: repeat(auto-fit, minmax(150px, 1fr);gap: 15px; }
 .small { font-size: 14px; }
+:root {
+  --vino: #6b0f1a;
+  --matcha: #7a9e7e;
+  --negro: #1a1a1a;
+  --blanco: #ffffff;
+}
 
-
+/* Fondo elegante */
+body {background: linear-gradient(135deg, #f5f5f5, #e8efe8);}
+/* Header más premium */
+header { background: linear-gradient(90deg, var(--vino), var(--negro)); letter-spacing: 1px;}
+/* Tarjetas elegantes */
+.card {border-left: 5px solid var(--matcha); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+/* Botones pro */
+.button { background: linear-gradient(90deg, var(--vino), #a4161a); transition: 0.3s; }
+.button:hover { transform: scale(1.05); background: var(--matcha);}
+/* Títulos */
+h2 {color: var(--vino);}
 </style>
 
 </head>
@@ -30,15 +46,55 @@ section { padding: 20px; }
     <h2>📋 Menú</h2>
 
     <div class="menu-grid">
-        <div class="card">Molletes</div>
+        <div class="card">Agua Kirkland</div>
+        <div class="card">Café Chico</div>
+        <div class="card">Café Grande</div>
+        <div class="card">Chapatas</div>
         <div class="card">Chilaquiles</div>
-        <div class="card">Sandwich</div>
+        <div class="card">Cuernito</div>
+        <div class="card">Ensalada Mediterranea</div>
         <div class="card">Hot Dog</div>
+        <div class="card">Licuado</div>
+        <div class="card">Molletes</div>
+        <div class="card">Omelette</div>
+        <div class="card">Sandwich</div>
         <div class="card">Sincronizadas</div>
+        <div class="card">Té Chico</div>
+        <div class="card">Té Grande</div>
         <div class="card">Tortas</div>
     </div>
 </section>
 
+<section>
+  <h2>🔥 Promociones VIP</h2>
+  <div class="card">
+    ☕ Combo Buenos días: Café + Pan $35
+  </div>
+  <div class="card">
+    🥗 Semana Sana: Ensalada + Jugo $70
+  </div>
+  <div class="card">
+    🎉 Día de Antojo: 2x1 en Molletes
+  </div>
+    <div class="card">
+    👔Combo Ejecutivo: Comida + Agua + Postre $120
+  </div>
+</section>
+
+<section>
+  <h2>🗳️ Vota por el menú de la semana</h2>
+
+  <div class="card">
+    <p>¿Qué quieres la próxima semana?</p>
+
+    <button class="button" onclick="votar('Tacos')">🌮 Tacos</button>
+    <button class="button" onclick="votar('Pasta')">🍝 Pasta</button>
+    <button class="button" onclick="votar('Sushi')">🍣 Sushi</button>
+
+    <p id="resultadoVotos"></p>
+  </div>
+</section>
+    
 <section>
     <h2>⏱ Estado del servicio</h2>
 
@@ -51,7 +107,14 @@ section { padding: 20px; }
 <section>
     <h2>🛒 Pedidos</h2>
 
-    <button class="button" onclick="mostrarFormulario()">Hacer pedido</button>
+    <button class="button" onclick="mostrarFormulario()"
+        <label>Tipo:</label><br>
+        <select id="tipo" onchange="cambiarMenu()">
+        <option value="">Selecciona</option>
+        <option value="comida">Comida</option>
+        <option value="snack">Snack</option>
+        <option value="bebida">Bebida</option>
+</select><br><br>>Hacer pedido</button>
 
     <div id="formulario" style="display:none; margin-top:20px;" class="card">
 
@@ -65,12 +128,8 @@ section { padding: 20px; }
         <option>Poniente</option>
     </select><br><br>
 
-    <select id="producto">
-        <option>Molletes</option>
-        <option>Chilaquiles</option>
-        <option>Sandwich</option>
-        <option>Hot Dog</option>
-    </select><br><br>
+    <select id="producto"></select>
+    <select id="detalle"></select><br><br>
 
     <select id="extras" multiple class="small">
         <option>Jamón</option>
@@ -212,10 +271,31 @@ section { padding: 20px; }
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { 
-    getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc 
+  import {getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc 
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// Votar menu de la semana próxima
+window.votar = async function(opcion) {
+  const ref = doc(db, "encuestas", "menu-semana");
+  try {await updateDoc(ref, { [opcion]: increment(1)
+    });
+    alert("¡Gracias por votar!");
+  } catch(e) {alert("Error al votar");
+  }
+};
+onSnapshot(doc(db, "encuestas", "menu-semana"), (docSnap) => {
+  if(docSnap.exists()) {
+    const data = docSnap.data();
+    document.getElementById("resultadoVotos").innerHTML = `
+      🌮 Tacos dorados de pollo y papa: ${data.Tacos || 0} votos <br>
+      🍽️ Sopes: ${data.Pasta || 0} votos <br>
+      🍗 Tinga de pollo: ${data.Sushi || 0} votos
+    `;
+  }
+});
+
+//Base de datos aplicada a la web 
   const firebaseConfig = {
     apiKey: "AIzaSyCTGbs7bpa-VPJWvaOFwO8HTmmXRHjEPmU",
     authDomain: "cafeteria-quinto-piso-88921.firebaseapp.com",
@@ -227,7 +307,6 @@ section { padding: 20px; }
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-
   // --- MOTOR EN TIEMPO REAL ---
   const q = query(collection(db, "pedidos"), orderBy("timestamp", "asc"));
 
@@ -273,7 +352,8 @@ section { padding: 20px; }
         <p style="margin: 8px 0;">☕ <b>Producto:</b> ${p.producto}</p>
         <p style="margin: 4px 0; font-size: 0.9em; color: #666;">🕒 Programado: ${p.tiempo}</p>
         <p style="margin: 4px 0; font-size: 0.9em; color: #007bff;">🔢 Turno: #${index + 1} (Espera: ${ (index + 1) * 5 } min)</p>
-        <button onclick="cancelarPedido('${p.id}')" style="background: #ff4d4d; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px;">
+        <button onclick="cancelarPedido('${p.id}')" style="background: #ff4d4d; color: white; border: none; padding: 8px;
+            border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px;">
             Cancelar Pedido
         </button>
       `;
@@ -291,27 +371,78 @@ section { padding: 20px; }
     }
   }
 
+window.cambiarMenu = function() {
+  const tipo = document.getElementById("tipo").value;
+  const producto = document.getElementById("producto");
+  producto.innerHTML = "";
+  let opciones = [];
+  if(tipo === "snack") {
+    opciones = ["Papas", "Galletas", "Chicles"];
+  }
+  if(tipo === "bebida") {
+    opciones = ["Café", "Jugo", "Licuado"];
+  }
+  if(tipo === "comida") {
+    opciones = ["Chilaquiles", "Molletes", "Sandwich"];
+  }
+  opciones.forEach(op => {
+    const option = document.createElement("option");
+    option.textContent = op;
+    producto.appendChild(option);
+  });
+};
+
+document.getElementById("producto").addEventListener("change", function() {
+  const valor = this.value;
+  const detalle = document.getElementById("detalle");
+
+  detalle.innerHTML = "";
+  let opciones = [];
+  if(valor === "Papas") {
+    opciones = ["Doritos", "Ruffles", "Adobadas"];  }
+  if(valor === "Galletas") {
+    opciones = ["Emperador", "Marías", "Oreo"];  }
+  if(valor === "Café") {
+    opciones = ["Americano", "Latte", "Capuchino"];   }
+  if(valor === "Chilaquiles") {
+    opciones = ["Verdes", "Rojos"];   }
+  opciones.forEach(op => {
+    const option = document.createElement("option");
+    option.textContent = op;
+    detalle.appendChild(option);
+  });
+});
+    <input id="extraLibre" placeholder="Agregar algo extra (opcional)"><br><br>
+
+        
   function bloquearHorariosOcupados(ocupados) {
     const select = document.getElementById("tiempo");
+    const ahora = new Date();
+    const horaActual = ahora.getHours();
+    const minutosActual = ahora.getMinutes();
     if(!select) return;
-    
     for(let i = 0; i < select.options.length; i++){
-        let opt = select.options[i];
-        // Solo bloqueamos los que no son "Lo más pronto posible"
-        if(opt.value !== "Lo más pronto posible") {
-            opt.disabled = ocupados.includes(opt.value);
-            opt.style.color = opt.disabled ? "#ccc" : "#000";
-        }
+      let opt = select.options[i];
+
+      if(opt.value !== "Lo más pronto posible") {
+        let [hora, min] = opt.value.replace(" am","").replace(" pm","").split(":");
+        hora = parseInt(hora);
+        min = parseInt(min);
+    if(opt.value.includes("pm") && hora !== 12) hora += 12;
+
+    const pasada = (hora < horaActual) || (hora === horaActual && min <= minutosActual);
+    opt.disabled = ocupados.includes(opt.value) || pasada;
+    opt.style.color = opt.disabled ? "#ccc" : "#000";
+      }
     }
   }
 
   // --- FUNCIONES GLOBALES (Window) ---
-
   window.hacerPedido = async function() {
     const nombre = document.getElementById("nombre").value;
     const producto = document.getElementById("producto").value;
     const tiempo = document.getElementById("tiempo").value;
-
+    const extraLibre = document.getElementById("extraLibre").value;
     if(!nombre || !producto) return alert("Por favor, completa los campos.");
 
     try {
@@ -320,9 +451,10 @@ section { padding: 20px; }
         producto,
         tiempo,
         estado: "En preparación",
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        extraLibre,
       });
-      alert("¡Pedido enviado correctamente!");
+      alert("¡Pedido enviado correctamente a la cafeteria!");
       document.getElementById("formulario").style.display = "none";
     } catch (e) {
       alert("Error al enviar: " + e.message);
@@ -330,14 +462,25 @@ section { padding: 20px; }
   };
 
   window.cancelarPedido = async function(id) {
+  const password = prompt("Ingresa contraseña para cancelar:");
+  const passAdmin = "Cafeteria"; // cafetería
+
+  if(password === passCliente || password === passAdmin) {
     if(confirm("¿Seguro que quieres eliminar este pedido?")) {
-      await deleteDoc(doc(db, "pedidos", id));
-    }
-  };
+      await deleteDoc(doc(db, "pedidos", id));  }
+  } else {
+    alert("Contraseña incorrecta"); }
+};
 
   window.mostrarFormulario = () => {
     document.getElementById("formulario").style.display = "block";
   };
+
+    setInterval(() => {
+  const ahora = new Date();
+  if(ahora.getHours() === 8 && ahora.getMinutes() === 0) {
+    location.reload();
+  } }, 60000);
 </script>
     
 </body>
