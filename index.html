@@ -83,13 +83,12 @@ h2 {color: var(--vino);}
 
 <section>
   <h2>🗳️ Vota por el menú de la semana</h2>
-
   <div class="card">
     <p>¿Qué quieres la próxima semana?</p>
 
-    <button class="button" onclick="votar('Tacos')">🌮 Tacos</button>
-    <button class="button" onclick="votar('Pasta')">🍝 Pasta</button>
-    <button class="button" onclick="votar('Sushi')">🍣 Sushi</button>
+    <button class="button" onclick="votar('Tacos dorados de pollo y papa')">🌮 Tacos</button>
+    <button class="button" onclick="votar('Sopes')">🍽️ Sopes</button>
+    <button class="button" onclick="votar('Tinga de pollo')">🍗 Tinga de pollo</button>
 
     <p id="resultadoVotos"></p>
   </div>
@@ -107,14 +106,18 @@ h2 {color: var(--vino);}
 <section>
     <h2>🛒 Pedidos</h2>
 
-    <button class="button" onclick="mostrarFormulario()"
-        <label>Tipo:</label><br>
-        <select id="tipo" onchange="cambiarMenu()">
-        <option value="">Selecciona</option>
-        <option value="comida">Comida</option>
-        <option value="snack">Snack</option>
-        <option value="bebida">Bebida</option>
-</select><br><br>>Hacer pedido</button>
+  <label for="tipo">Tipo:</label><br>
+<select id="tipo" onchange="cambiarMenu()">
+    <option value="">Selecciona</option>
+    <option value="comida">Comida</option>
+    <option value="snack">Snack</option>
+    <option value="bebida">Bebida</option>
+</select>
+<br><br>
+
+<button class="button" onclick="mostrarFormulario()">
+    Hacer pedido
+</button>
 
     <div id="formulario" style="display:none; margin-top:20px;" class="card">
 
