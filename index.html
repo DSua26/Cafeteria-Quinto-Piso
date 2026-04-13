@@ -31,6 +31,12 @@ header { background: linear-gradient(90deg, var(--vino), var(--negro)); letter-s
 .button:hover { transform: scale(1.05); background: var(--matcha);}
 /* Títulos */
 h2 {color: var(--vino);}
+
+.menu-categorias {display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+.categoria h3 { background: var(--vino); color: white; padding: 10px;
+  border-radius: 8px; cursor: pointer; text-align: center; }
+.contenido { display: none;  margin-top: 10px; }
+  
 </style>
 
 </head>
@@ -45,23 +51,34 @@ h2 {color: var(--vino);}
 <section>
     <h2>📋 Menú</h2>
 
-    <div class="menu-grid">
-        <div class="card">Agua Kirkland</div>
-        <div class="card">Café Chico</div>
-        <div class="card">Café Grande</div>
-        <div class="card">Chapatas</div>
-        <div class="card">Chilaquiles</div>
-        <div class="card">Cuernito</div>
-        <div class="card">Ensalada Mediterranea</div>
-        <div class="card">Hot Dog</div>
-        <div class="card">Licuado</div>
-        <div class="card">Molletes</div>
-        <div class="card">Omelette</div>
-        <div class="card">Sandwich</div>
-        <div class="card">Sincronizadas</div>
-        <div class="card">Té Chico</div>
-        <div class="card">Té Grande</div>
-        <div class="card">Tortas</div>
+    <div class="menu-categorias">
+
+        <div class="categoria">
+            <h3 onclick="toggleMenu('snack')">🍟 Snacks</h3>
+            <div id="snack" class="contenido">
+                <div class="card">Papas</div>
+                <div class="card">Galletas</div>
+                <div class="card">Chicles</div>
+            </div>
+        </div>
+
+        <div class="categoria">
+            <h3 onclick="toggleMenu('comida')">🍽️ Comida</h3>
+            <div id="comida" class="contenido">
+                <div class="card">Chilaquiles</div>
+                <div class="card">Molletes</div>
+                <div class="card">Sandwich</div>
+            </div>
+        </div>
+      
+        <div class="categoria">
+            <h3 onclick="toggleMenu('bebida')">🥤 Bebidas</h3>
+            <div id="bebida" class="contenido">
+                <div class="card">Café</div>
+                <div class="card">Té</div>
+                <div class="card">Licuado</div>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -137,9 +154,8 @@ h2 {color: var(--vino);}
         <option>Chorizo</option>
         <option>Queso</option>
         <option>Huevo</option>
+       <input id="extraLibre" placeholder="Agregar algo extra (opcional)"><br><br>
     </select><br><br>
-
-      <input id="extraLibre" placeholder="Agregar algo extra (opcional)"><br><br>
 
     <select id="entrega">
         <option>Recoger en cafetería</option>
@@ -290,11 +306,16 @@ onSnapshot(doc(db, "encuestas", "menu-semana"), (docSnap) => {
   if(docSnap.exists()) {
     const data = docSnap.data();
     document.getElementById("resultadoVotos").innerHTML = `
-      🌮 Tacos dorados de pollo y papa: ${data.Tacos || 0} votos <br>
-      🍽️ Sopes: ${data.Sopes || 0} votos <br>
-      🍗 Tinga de pollo: ${data.Tinga || 0} votos
+      🌮 Tacos dorados de pollo y papa ${data.Tacos || 0} votos <br>
+      🍽️ Sopes ${data.Sopes || 0} votos <br>
+      🍗 Tinga de pollo ${data.Tinga || 0} votos
     `;
   }
+  if(localStorage.getItem("yaVoto")) {
+  alert("Ya votaste 😅");
+  return;
+}
+  localStorage.setItem("yaVoto", "true");
 });
 
 //Base de datos aplicada a la web 
@@ -450,18 +471,14 @@ document.getElementById("producto").addEventListener("change", function() {
     const pasada = (hora < horaActual) || (hora === horaActual && min <= minutosActual);
     opt.disabled = ocupados.includes(opt.value) || pasada;
     opt.style.color = opt.disabled ? "#ccc" : "#000";
-      }
-    }
-  }
+      }  }  }
 
-  // --- FUNCIONES GLOBALES (Window) ---
   window.hacerPedido = async function() {
     const nombre = document.getElementById("nombre").value;
     const producto = document.getElementById("producto").value;
     const tiempo = document.getElementById("tiempo").value;
     const extraLibre = document.getElementById("extraLibre").value;
     if(!nombre || !producto) return alert("Por favor, completa los campos.");
-
     try {
       const cliente = await obtenerCliente(nombre);
       // Actualizar pedidos
@@ -499,13 +516,18 @@ document.getElementById("producto").addEventListener("change", function() {
 
   window.cancelarPedido = async function(id) {
   const password = prompt("Ingresa contraseña para cancelar:");
-  const passAdmin = "Cafeteria"; // cafetería
+  const passAdmin = "medica2024"; // Quinto Piso
 
-  if(password === passCliente || password === passAdmin) {
+  if(password === passAdmin) {
     if(confirm("¿Seguro que quieres eliminar este pedido?")) {
       await deleteDoc(doc(db, "pedidos", id));  }
   } else {
     alert("Contraseña incorrecta"); }
+};
+
+  window.toggleMenu = function(id) {
+  const seccion = document.getElementById(id);
+  seccion.style.display = seccion.style.display === "block" ? "none" : "block";
 };
 
   window.mostrarFormulario = () => {
