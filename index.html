@@ -301,6 +301,14 @@ window.votar = async function(opcion) {
     alert("¡Gracias por votar!");
   } catch(e) {alert("Error al votar");
   }
+   if(localStorage.getItem("yaVoto")) {
+  alert("Ya votaste 😅");
+  return; }
+  localStorage.setItem("yaVoto", "true");
+  
+  if(localStorage.getItem("yaVoto")) {
+  alert("Ya votaste 😅");
+  return; }
 };
 onSnapshot(doc(db, "encuestas", "menu-semana"), (docSnap) => {
   if(docSnap.exists()) {
@@ -309,13 +317,7 @@ onSnapshot(doc(db, "encuestas", "menu-semana"), (docSnap) => {
       🌮 Tacos dorados de pollo y papa ${data.Tacos || 0} votos <br>
       🍽️ Sopes ${data.Sopes || 0} votos <br>
       🍗 Tinga de pollo ${data.Tinga || 0} votos
-    `;
-  }
-  if(localStorage.getItem("yaVoto")) {
-  alert("Ya votaste 😅");
-  return;
-}
-  localStorage.setItem("yaVoto", "true");
+    `;   }
 });
 
 //Base de datos aplicada a la web 
@@ -516,8 +518,7 @@ document.getElementById("producto").addEventListener("change", function() {
 
   window.cancelarPedido = async function(id) {
   const password = prompt("Ingresa contraseña para cancelar:");
-  const passAdmin = "medica2024"; // Quinto Piso
-
+  const passAdmin = "Cafeteria"; 
   if(password === passAdmin) {
     if(confirm("¿Seguro que quieres eliminar este pedido?")) {
       await deleteDoc(doc(db, "pedidos", id));  }
