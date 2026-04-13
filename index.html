@@ -103,9 +103,9 @@ h2 {color: var(--vino);}
   <div class="card">
     <p>¿Qué quieres la próxima semana?</p>
 
-    <button class="button" onclick="votar('Tacos dorados de pollo y papa')">🌮 Tacos dorados de pollo y papa </button>
-    <button class="button" onclick="votar('Sopes')">🍽️ Sopes </button>
-    <button class="button" onclick="votar('Tinga de polo')">🍗 Tinga de pollo </button>
+    <button class="button" onclick="votar('1')">🌮 Tacos dorados de pollo y papa </button>
+    <button class="button" onclick="votar('2')">🍽️ Sopes </button>
+    <button class="button" onclick="votar('3')">🍗 Tinga de pollo </button>
 
     <p id="resultadoVotos"></p>
   </div>
@@ -154,8 +154,8 @@ h2 {color: var(--vino);}
         <option>Chorizo</option>
         <option>Queso</option>
         <option>Huevo</option>
-       <input id="extraLibre" placeholder="Agregar algo extra (opcional)"><br><br>
     </select><br><br>
+      <input id="extraLibre" placeholder="Agregar algo extra (opcional)"><br><br>
 
     <select id="entrega">
         <option>Recoger en cafetería</option>
@@ -276,16 +276,6 @@ h2 {color: var(--vino);}
 </section>
 
 <hr> 
-<div id="seccion-pedidos" style="padding: 20px; font-family: sans-serif;">
-    <h2 style="text-align: center;">📋 Pedidos en Curso</h2>
-    
-    <div id="estadoServicio" style="background: #f8f9fa; border-left: 5px solid #007bff; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
-        Cargando estado del servicio...
-    </div>
-
-    <div id="listaPedidos" style="display: grid; gap: 15px;">
-        </div>
-</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -295,20 +285,19 @@ h2 {color: var(--vino);}
 
 // Votar menu de la semana próxima
 window.votar = async function(opcion) {
-  const ref = doc(db, "encuestas", "menu-semana");
-  try {await updateDoc(ref, { [opcion]: increment(1)
-    });
-    alert("¡Gracias por votar!");
-  } catch(e) {alert("Error al votar");
-  }
-   if(localStorage.getItem("yaVoto")) {
-  alert("Ya votaste 😅");
-  return; }
-  localStorage.setItem("yaVoto", "true");
-  
+
   if(localStorage.getItem("yaVoto")) {
-  alert("Ya votaste 😅");
-  return; }
+    alert("Ya votaste 😅");
+    return;  }
+  const ref = doc(db, "encuestas", "menu-semana");
+  try {
+    await updateDoc(ref, {
+      [opcion]: increment(1)
+    });
+    localStorage.setItem("yaVoto", "true");
+    alert("¡Gracias por votar!");
+  } catch(e) {
+    alert("Error al votar: " + e.message);   }
 };
 onSnapshot(doc(db, "encuestas", "menu-semana"), (docSnap) => {
   if(docSnap.exists()) {
@@ -475,6 +464,12 @@ document.getElementById("producto").addEventListener("change", function() {
     opt.style.color = opt.disabled ? "#ccc" : "#000";
       }  }  }
 
+  function calcularTipoCliente(pedidos, propinas) {
+        if (pedidos >= 20 && propinas >= 50) return "VIP";
+        if (pedidos >= 10 && propinas > 0) return "Favorito";
+        if (pedidos >= 3) return "Normal";
+          return "Inicial"; }
+
   window.hacerPedido = async function() {
     const nombre = document.getElementById("nombre").value;
     const producto = document.getElementById("producto").value;
@@ -490,16 +485,8 @@ document.getElementById("producto").addEventListener("change", function() {
       const nuevoSnap = await getDoc(doc(db, "clientes", nombre));
       const data = nuevoSnap.data();
       const nuevoTipo = calcularTipoCliente(data.pedidos, data.propinas);
-
       await updateDoc(doc(db, "clientes", nombre), {
       tipo: nuevoTipo });
-      
-      function calcularTipoCliente(pedidos, propinas) {
-        if (pedidos >= 20 && propinas >= 50) return "VIP";
-        if (pedidos >= 10 && propinas > 0) return "Favorito";
-        if (pedidos >= 3) return "Normal";
-          return "Inicial"; }
-      
       await addDoc(collection(db, "pedidos"), {
         nombre,
         producto,
