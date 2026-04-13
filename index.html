@@ -32,10 +32,11 @@ header { background: linear-gradient(90deg, var(--vino), var(--negro)); letter-s
 /* Títulos */
 h2 {color: var(--vino);}
 
-.menu-categorias {display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+.menu-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+    gap: 15px; }
+.contenido { display: none; margin-top: 10px; }
 .categoria h3 { background: var(--vino); color: white; padding: 10px;
   border-radius: 8px; cursor: pointer; text-align: center; }
-.contenido { display: none;  margin-top: 10px; }
   
 </style>
 
@@ -279,35 +280,8 @@ h2 {color: var(--vino);}
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import {getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc 
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-// Votar menu de la semana próxima
-window.votar = async function(opcion) {
-
-  if(localStorage.getItem("yaVoto")) {
-    alert("Ya votaste 😅");
-    return;  }
-  const ref = doc(db, "encuestas", "menu-semana");
-  try {
-    await updateDoc(ref, {
-      [opcion]: increment(1)
-    });
-    localStorage.setItem("yaVoto", "true");
-    alert("¡Gracias por votar!");
-  } catch(e) {
-    alert("Error al votar: " + e.message);   }
-};
-onSnapshot(doc(db, "encuestas", "menu-semana"), (docSnap) => {
-  if(docSnap.exists()) {
-    const data = docSnap.data();
-    document.getElementById("resultadoVotos").innerHTML = `
-      🌮 Tacos dorados de pollo y papa ${data.Tacos || 0} votos <br>
-      🍽️ Sopes ${data.Sopes || 0} votos <br>
-      🍗 Tinga de pollo ${data.Tinga || 0} votos
-    `;   }
-});
+  import {getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, increment, 
+          setDoc, getDoc} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js" ;
 
 //Base de datos aplicada a la web 
   const firebaseConfig = {
@@ -321,6 +295,41 @@ onSnapshot(doc(db, "encuestas", "menu-semana"), (docSnap) => {
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+
+  window.toggleMenu = (id) => {
+    const seccion = document.getElementById(id);
+    seccion.style.display = (seccion.style.display === "block") ? "none" : "block";
+};
+
+ window.mostrarFormulario = () => {
+    document.getElementById("formulario").style.display = "block";
+  };
+  
+// Votar menu de la semana próxima
+window.votar = async function(opcion) {
+
+  if(localStorage.getItem("yaVoto")) return alert("Solo un voto por persona 😊");  
+  const ref = doc(db, "encuestas", "menu-semana");
+  const nombres = { '1': 'Tacos', '2': 'Sopes', '3': 'Tinga' };
+  try {
+    await updateDoc(ref, {[nombres[opcion]]: increment(1) });
+    localStorage.setItem("yaVoto", "true");
+    alert("¡Gracias por votar!");
+  } catch(e) { alert("Error al votar: " + e.message);   }
+};
+
+
+
+onSnapshot(doc(db, "encuestas", "menu-semana"), (docSnap) => {
+  if(docSnap.exists()) {
+    const data = docSnap.data();
+    document.getElementById("resultadoVotos").innerHTML = `
+      🌮 Tacos dorados de pollo y papa ${data.Tacos || 0} votos <br>
+      🍽️ Sopes ${data.Sopes || 0} votos <br>
+      🍗 Tinga de pollo ${data.Tinga || 0} votos
+    `;   }
+});
+
   // --- CLIENTES ---
 import { setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -470,11 +479,12 @@ document.getElementById("producto").addEventListener("change", function() {
         if (pedidos >= 3) return "Normal";
           return "Inicial"; }
 
-  window.hacerPedido = async function() {
+  window.hacerPedido = async () => {
     const nombre = document.getElementById("nombre").value;
     const producto = document.getElementById("producto").value;
     const tiempo = document.getElementById("tiempo").value;
     const extraLibre = document.getElementById("extraLibre").value;
+    
     if(!nombre || !producto) return alert("Por favor, completa los campos.");
     try {
       const cliente = await obtenerCliente(nombre);
@@ -488,15 +498,15 @@ document.getElementById("producto").addEventListener("change", function() {
       await updateDoc(doc(db, "clientes", nombre), {
       tipo: nuevoTipo });
       await addDoc(collection(db, "pedidos"), {
-        nombre,
-        producto,
-        tiempo,
+        nombre: nombre,
+        producto: producto,
+        tiempo: tiempo,
         estado: "En preparación",
-        timestamp: Date.now(),
-        extraLibre,
+        timestamp: Date.now()
+        extraLibre: comentario,
         tipoCliente: nuevoTipo,
       });
-      alert("¡Pedido enviado correctamente a la cafeteria!");
+      alert("¡Pedido enviado a la cafeteria!");
       document.getElementById("formulario").style.display = "none";
     } catch (e) {
       alert("Error al enviar: " + e.message);
@@ -518,9 +528,6 @@ document.getElementById("producto").addEventListener("change", function() {
   seccion.style.display = seccion.style.display === "block" ? "none" : "block";
 };
 
-  window.mostrarFormulario = () => {
-    document.getElementById("formulario").style.display = "block";
-  };
     setInterval(() => {
   const ahora = new Date();
   if(ahora.getHours() === 8 && ahora.getMinutes() === 0) {
