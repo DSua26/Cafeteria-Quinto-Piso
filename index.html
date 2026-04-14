@@ -5,20 +5,12 @@
 <title>Cafetería El Quinto Piso</title>
 
 <style>
-body { font-family: Arial; margin: 0; background-color: #f5f5f5; }
-header { background-color: #2c2c2c; color: white; padding: 20px; text-align: center; }
-section { padding: 20px; }
-.card { animation: fadeIn 0.3s ease;}
-@keyframes fadeIn {
-  from {opacity:0; transform: translateY(10px);}
-  to {opacity:1; transform: translateY(0);}
-}
-.button { background-color: #8B0000; color: white; padding: 10px; border-radius: 5px; border: none; }
-.estado { font-weight: bold; }
-.menu-grid {display: grid;grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));gap: 15px; }
-.small { font-size: 14px; }
+body { font-family: Arial, sans-serif;
+  margin: 0; color: white;
+  background: linear-gradient(135deg, #2f3e2c, #5a0f1f); }
+
+/* Variables */
 :root {
- :root {
   --vino: #5a0f1f;
   --vino-claro: #7b1e32;
   --militar: #4b5d3a;
@@ -28,33 +20,64 @@ section { padding: 20px; }
   --blanco: #ffffff;
 }
 
-/* Fondo elegante */
-body {background: linear-gradient(135deg, #f5f5f5, #e8efe8);}
-/* Header más premium */
-header { background: linear-gradient(135deg, var(--vino), var(--militar));
-  color: var(--blanco); padding: 30px; text-align: center;
-  box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
-/* Tarjetas elegantes */
-.card { background: white; padding: 15px; margin: 12px 0;
-  border-radius: 16px; border-left: 6px solid var(--militar);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
-  animation: fadeIn 0.3s ease;
-}
-/* Botones pro */
-.button { background: linear-gradient(90deg, var(--vino), var(--vino-claro));
-  color: white; padding: 12px 18px; border-radius: 10px; border: none;
-  font-weight: bold; cursor: pointer; }
-.button:hover { background: linear-gradient(90deg, var(--militar), var(--militar-claro));
-  transform: scale(1.03); }
-/* Títulos */
-h2 {color: var(--vino);}
+/* Header premium */
+header {
+  background: linear-gradient(135deg, var(--vino), var(--militar));
+  color: white; padding: 30px; text-align: center;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.25);}
 
-.menu-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
-    gap: 15px; }
-.contenido { display: none; margin-top: 10px; }
-.categoria h3 { background: var(--vino); color: white; padding: 10px;
-  border-radius: 8px; cursor: pointer; text-align: center; }
-  
+/* Secciones */
+section { padding: 20px;}
+
+/* Tarjetas */
+.card {
+  background: rgba(255,255,255,0.92);
+  color: #222; padding: 15px;
+  margin: 12px 0; border-radius: 16px;
+  border-left: 6px solid var(--militar);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+  animation: fadeIn 0.3s ease; }
+
+/* Botones */
+.button {
+  background: linear-gradient(90deg, var(--vino), var(--vino-claro));
+  color: white; padding: 12px 18px; border-radius: 10px;
+  border: none; font-weight: bold; cursor: pointer; }
+
+.button:hover {
+  background: linear-gradient(90deg, var(--militar), var(--militar-claro));
+  transform: scale(1.03);}
+
+/* Títulos */
+h2 { color: #f8f6f1;}
+
+/* Categorías menú */
+.categoria h3 {
+  background: var(--vino); color: white; padding: 12px;
+  border-radius: 10px; cursor: pointer; text-align: center;}
+
+.categoria h3:hover {background: var(--militar);}
+
+/* Contenido desplegable */
+.contenido { display: none; margin-top: 10px;}
+
+/* Grid */
+.menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px; }
+
+/* Texto pequeño */
+.small { font-size: 14px;}
+
+/* Estado */
+.estado { font-weight: bold;}
+
+/* Animación */
+@keyframes fadeIn {
+  from {
+    opacity:0; transform: translateY(10px);  }
+  to {
+    opacity:1; transform: translateY(0); }
+}
 </style>
 
 </head>
