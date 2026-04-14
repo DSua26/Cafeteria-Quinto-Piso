@@ -86,9 +86,25 @@ h2 { color: #f8f6f1;}
 
 <header>
     <h1>Cafetería El Quinto Piso ☕</h1>
-    <p>Haz tu pedido antes de bajar</p>
+    <p>Tus pedidos más rápidos</p>
 </header>
 
+<section>
+  <h2>🔥 Promociones VIP</h2>
+  <div class="card">
+    ☕ Combo Buenos días: Café + Pan $35
+  </div>
+  <div class="card">
+    🥗 Semana Sana: Ensalada + Jugo $70
+  </div>
+  <div class="card">
+    🎉 Día de Antojo: 2x1 en Molletes
+  </div>
+    <div class="card">
+    👔Combo Ejecutivo: Comida + Agua + Postre $120
+  </div>
+</section>
+  
 <section>
     <h2>📋 Menú</h2>
 
@@ -123,35 +139,6 @@ h2 { color: #f8f6f1;}
     </div>
 </section>
 
-<section>
-  <h2>🔥 Promociones VIP</h2>
-  <div class="card">
-    ☕ Combo Buenos días: Café + Pan $35
-  </div>
-  <div class="card">
-    🥗 Semana Sana: Ensalada + Jugo $70
-  </div>
-  <div class="card">
-    🎉 Día de Antojo: 2x1 en Molletes
-  </div>
-    <div class="card">
-    👔Combo Ejecutivo: Comida + Agua + Postre $120
-  </div>
-</section>
-
-<section>
-  <h2>🗳️ Vota por el menú de la semana</h2>
-  <div class="card">
-    <p>¿Qué quieres la próxima semana?</p>
-
-    <button class="button" onclick="votar('1')">🌮 Tacos dorados de pollo y papa </button>
-    <button class="button" onclick="votar('2')">🍽️ Sopes </button>
-    <button class="button" onclick="votar('3')">🍗 Tinga de pollo </button>
-
-    <p id="resultadoVotos"></p>
-  </div>
-</section>
-    
 <section>
     <h2>⏱ Estado del servicio</h2>
 
@@ -312,8 +299,28 @@ h2 { color: #f8f6f1;}
 </section>
 
 <section>
+  <h2>🛒 Carrito</h2>
+  <div id="carritoVisual" class="card">
+    No hay productos agregados.
+  </div>
+</section>
+  
+<section>
     <h2>📦 Pedidos en curso</h2>
     <div id="listaPedidos"></div>
+</section>
+
+<section>
+  <h2>🗳️ Vota por el menú de la semana</h2>
+  <div class="card">
+    <p>¿Qué quieres la próxima semana?</p>
+
+    <button class="button" onclick="votar('1')">🌮 Tacos dorados de pollo y papa </button>
+    <button class="button" onclick="votar('2')">🍽️ Sopes </button>
+    <button class="button" onclick="votar('3')">🍗 Tinga de pollo </button>
+
+    <p id="resultadoVotos"></p>
+  </div>
 </section>
 
 <hr> 
@@ -361,6 +368,8 @@ window.votar = async function(opcion) {
  window.hacerPedido = async () => {
     const nombre = document.getElementById("nombre").value;
     const producto = document.getElementById("producto").value;
+    const propina = parseFloat(prompt("¿Deseas agregar propina?")) || 0;
+    const montoCompra = 10;
     const tiempo = document.getElementById("tiempo").value;
     const extraLibre = document.getElementById("extraLibre").value;
    if(!nombre.trim() || !producto) { alert("Por favor, completa los campos."); return;}
@@ -368,11 +377,14 @@ window.votar = async function(opcion) {
       const cliente = await obtenerCliente(nombre);
       // Actualizar pedidos
       await updateDoc(doc(db, "clientes", nombre), {
-      pedidos: increment(1)
+      pedidos: increment(1),
+      compras: increment(montoCompra),
+      propinas: increment(propina)
       });
       const nuevoSnap = await getDoc(doc(db, "clientes", nombre));
       const data = nuevoSnap.data();
-      const nuevoTipo = calcularTipoCliente(data.pedidos, data.propinas);
+      const nuevoTipo = calcularTipoCliente(data.pedidos, data.propinas), aplicarTemaCliente(nuevoTipo);
+      mostrarPromoExclusiva(nuevoTipo);
       await updateDoc(doc(db, "clientes", nombre), {
       tipo: nuevoTipo });
       await addDoc(collection(db, "pedidos"), {
@@ -441,6 +453,7 @@ async function obtenerCliente(nombre) {
     await setDoc(ref, {
       nombre,
       pedidos: 0,
+      compras: 0,
       propinas: 0,
       tipo: "Inicial"
     });
@@ -474,11 +487,28 @@ async function obtenerCliente(nombre) {
         <button onclick="cancelarPedido('${p.id}')" style="background: #ff4d4d; color: white; border: none; padding: 8px;
             border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px;">
             Cancelar Pedido
+        <button onclick="cambiarEstado('${p.id}','En camino')" class="button">
+      🚚 En camino
+          </button>
+
+        <button onclick="cambiarEstado('${p.id}','Listo para recoger')" class="button">
+      ✅ Listo
+          </button>
         </button>
       `;
       contenedor.appendChild(div);
     });
   }
+
+  window.cambiarEstado = async function(id, nuevoEstado){
+  await updateDoc(doc(db,"pedidos",id),{
+    estado: nuevoEstado
+  });
+
+  if(nuevoEstado === "Listo para recoger"){
+    mostrarToast("🔔 Pedido listo para recoger");
+  }
+};
 
   function actualizarEstado(total) {
     const el = document.getElementById("estadoServicio");
@@ -557,6 +587,14 @@ document.getElementById("producto").addEventListener("change", function() {
         if (pedidos >= 25 && propinas > 0) return "Favorito";
         if (pedidos >= 3) return "Normal";
           return "Inicial"; }
+  
+  function aplicarTemaCliente(tipo){
+  const body = document.body;
+  if(tipo === "Inicial"){ body.style.background = "#4b5d3a"; }
+  if(tipo === "Normal"){ body.style.background = "#ffffff";  }
+  if(tipo === "Favorito"){ body.style.background = "#5a0f1f";  }
+  if(tipo === "VIP"){ body.style.background = "#111111"; }
+}
 
   window.cancelarPedido = async function(id) {
   const password = prompt("Ingresa contraseña:");
@@ -574,6 +612,12 @@ if(password === "medica2024") {
   } }, 60000);
 
   window.modoAdmin = function() {
+document.addEventListener("keydown", function(e){
+  if(e.ctrlKey && e.shiftKey && e.key === "A"){
+    document.getElementById("adminBtn").style.display = "block";
+    alert("Modo admin visible");
+  }
+});    
   const pass = prompt("Contraseña de administrador:");
   if(pass === "medica2024") {
     alert("Modo creador activado");
@@ -590,6 +634,15 @@ let carrito = [];
 
 function agregarAlCarrito(producto) {
   carrito.push(producto);
+  actualizarCarritoVisual();}
+
+function actualizarCarritoVisual() {
+  const div = document.getElementById("carritoVisual");
+  if(carrito.length === 0){
+    div.innerHTML = "No hay productos agregados.";
+    return; }
+
+  div.innerHTML = carrito.map(p => `☕ ${p}`).join("<br>");
 }
 
 function colorEstado(estado) {
@@ -598,13 +651,46 @@ function colorEstado(estado) {
   return "#999";
 }
 
+function mostrarToast(texto){
+  const toast = document.createElement("div");
+  toast.textContent = texto;
+  toast.style = `
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:#5a0f1f;
+    color:white;
+    padding:15px;
+    border-radius:12px;
+    box-shadow:0 6px 15px rgba(0,0,0,0.3);
+    z-index:9999;
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(()=>{
+    toast.remove();
+  },3000);
+}
+
+function mostrarPromoExclusiva(tipo){
+  let promo = "";
+  if(tipo === "Inicial"){
+    promo = "🌿 Bienvenido: Café gratis en segunda compra";  }
+  if(tipo === "Normal"){
+    promo = "✨ Promo Normal: 10% descuento en snacks";  }
+  if(tipo === "Favorito"){
+    promo = "🍷 Favorito: Postre gratis hoy";  }
+  if(tipo === "VIP"){
+    promo = "👑 VIP: Combo premium con 20% descuento";  }
+  mostrarToast(promo); }
+
 //Auto-scroll a pedidos nuevos
 const contenedor = document.getElementById("listaPedidos");
 contenedor.scrollTop = contenedor.scrollHeight;
 
 </script>
 
-  <button onclick="modoAdmin()" style="position:fixed; bottom:10px; right:10px; background:black; color:white;">
+  <button id="adminBtn" style="display:none;" onclick="modoAdmin()">
 ⚙️
 </button>
 </body>
