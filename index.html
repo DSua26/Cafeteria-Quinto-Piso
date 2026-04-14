@@ -300,7 +300,7 @@ h2 {color: var(--vino);}
     const seccion = document.getElementById(id);
     seccion.style.display = (seccion.style.display === "block") ? "none" : "block";
 };
-
+  
  window.mostrarFormulario = () => {
     document.getElementById("formulario").style.display = "block";
   };
@@ -318,7 +318,69 @@ window.votar = async function(opcion) {
   } catch(e) { alert("Error al votar: " + e.message);   }
 };
 
+ window.hacerPedido = async () => {
+    const nombre = document.getElementById("nombre").value;
+    const producto = document.getElementById("producto").value;
+    const tiempo = document.getElementById("tiempo").value;
+    const extraLibre = document.getElementById("extraLibre").value;
+   if(!nombre || !producto) return alert("Por favor, completa los campos.");
+    try {
+      const cliente = await obtenerCliente(nombre);
+      // Actualizar pedidos
+      await updateDoc(doc(db, "clientes", nombre), {
+      pedidos: increment(1)
+      });
+      const nuevoSnap = await getDoc(doc(db, "clientes", nombre));
+      const data = nuevoSnap.data();
+      const nuevoTipo = calcularTipoCliente(data.pedidos, data.propinas);
+      await updateDoc(doc(db, "clientes", nombre), {
+      tipo: nuevoTipo });
+      await addDoc(collection(db, "pedidos"), {
+        nombre: nombre,
+        producto: producto,
+        tiempo: tiempo,
+        estado: "En preparación",
+        timestamp: Date.now()
+        extraLibre: comentario,
+        tipoCliente: nuevoTipo,
+      });
+      alert("¡Pedido enviado a la cafeteria!");
+      document.getElementById("formulario").style.display = "none";
+    } catch (e) {
+      alert("Error al enviar: " + e.message);
+    }
+  };
 
+  const q = query(collection(db, "pedidos"), orderBy("timestamp", "asc"));
+onSnapshot(q, (snapshot) => {
+    const pedidosArr = [];
+    const horariosOcupados = [];
+    const lista = document.getElementById("listaPedidos");
+    lista.innerHTML = ""; // Limpiamos la lista antes de actualizar
+    
+    snapshot.forEach((doc) => {
+        const p = doc.data();
+        lista.innerHTML += `
+            <div class="card">
+                <b>${p.nombre}</b> pidió: ${p.producto} <br>
+                <small>Hora: ${p.tiempo} - Estado: ${p.estado}</small>
+            </div>
+        `;
+    });
+   snapshot.forEach((doc) => {
+      const data = doc.data();
+      pedidosArr.push({ id: doc.id, ...data });
+      
+      // Lógica de horarios ocupados
+      if(data.tiempo && data.tiempo !== "Lo más pronto posible"){
+          horariosOcupados.push(data.tiempo);
+      }
+    });
+  renderizarPedidos(pedidosArr);
+    actualizarEstado(pedidosArr.length);
+    bloquearHorariosOcupados(horariosOcupados);
+});
+    
 
 onSnapshot(doc(db, "encuestas", "menu-semana"), (docSnap) => {
   if(docSnap.exists()) {
@@ -346,28 +408,7 @@ async function obtenerCliente(nombre) {
     });
     return { nombre, pedidos: 0, propinas: 0, tipo: "Inicial" };   }
   return snap.data(); }
-  // --- MOTOR EN TIEMPO REAL ---
-  const q = query(collection(db, "pedidos"), orderBy("timestamp", "asc"));
-
-  onSnapshot(q, (snapshot) => {
-    const pedidosArr = [];
-    const horariosOcupados = [];
-    
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      pedidosArr.push({ id: doc.id, ...data });
-      
-      // Lógica de horarios ocupados
-      if(data.tiempo && data.tiempo !== "Lo más pronto posible"){
-          horariosOcupados.push(data.tiempo);
-      }
-    });
-
-    renderizarPedidos(pedidosArr);
-    actualizarEstado(pedidosArr.length);
-    bloquearHorariosOcupados(horariosOcupados);
-  });
-
+ 
   // --- FUNCIONES DE APOYO ---
 
   function renderizarPedidos(lista) {
@@ -474,44 +515,10 @@ document.getElementById("producto").addEventListener("change", function() {
       }  }  }
 
   function calcularTipoCliente(pedidos, propinas) {
-        if (pedidos >= 20 && propinas >= 50) return "VIP";
-        if (pedidos >= 10 && propinas > 0) return "Favorito";
+        if (pedidos >= 50 && propinas >= 100) return "VIP";
+        if (pedidos >= 25 && propinas > 0) return "Favorito";
         if (pedidos >= 3) return "Normal";
           return "Inicial"; }
-
-  window.hacerPedido = async () => {
-    const nombre = document.getElementById("nombre").value;
-    const producto = document.getElementById("producto").value;
-    const tiempo = document.getElementById("tiempo").value;
-    const extraLibre = document.getElementById("extraLibre").value;
-    
-    if(!nombre || !producto) return alert("Por favor, completa los campos.");
-    try {
-      const cliente = await obtenerCliente(nombre);
-      // Actualizar pedidos
-      await updateDoc(doc(db, "clientes", nombre), {
-      pedidos: increment(1)
-      });
-      const nuevoSnap = await getDoc(doc(db, "clientes", nombre));
-      const data = nuevoSnap.data();
-      const nuevoTipo = calcularTipoCliente(data.pedidos, data.propinas);
-      await updateDoc(doc(db, "clientes", nombre), {
-      tipo: nuevoTipo });
-      await addDoc(collection(db, "pedidos"), {
-        nombre: nombre,
-        producto: producto,
-        tiempo: tiempo,
-        estado: "En preparación",
-        timestamp: Date.now()
-        extraLibre: comentario,
-        tipoCliente: nuevoTipo,
-      });
-      alert("¡Pedido enviado a la cafeteria!");
-      document.getElementById("formulario").style.display = "none";
-    } catch (e) {
-      alert("Error al enviar: " + e.message);
-    }
-  };
 
   window.cancelarPedido = async function(id) {
   const password = prompt("Ingresa contraseña para cancelar:");
@@ -521,11 +528,6 @@ document.getElementById("producto").addEventListener("change", function() {
       await deleteDoc(doc(db, "pedidos", id));  }
   } else {
     alert("Contraseña incorrecta"); }
-};
-
-  window.toggleMenu = function(id) {
-  const seccion = document.getElementById(id);
-  seccion.style.display = seccion.style.display === "block" ? "none" : "block";
 };
 
     setInterval(() => {
