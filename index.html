@@ -8,8 +8,7 @@
 body { font-family: Arial; margin: 0; background-color: #f5f5f5; }
 header { background-color: #2c2c2c; color: white; padding: 20px; text-align: center; }
 section { padding: 20px; }
-//.card { background: white; padding: 10px; margin: 8px 0; border-radius: 10px; } 
-  .card { animation: fadeIn 0.3s ease;}
+.card { animation: fadeIn 0.3s ease;}
 @keyframes fadeIn {
   from {opacity:0; transform: translateY(10px);}
   to {opacity:1; transform: translateY(0);}
@@ -19,21 +18,34 @@ section { padding: 20px; }
 .menu-grid {display: grid;grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));gap: 15px; }
 .small { font-size: 14px; }
 :root {
-  --vino: #6b0f1a;
-  --matcha: #7a9e7e;
-  --negro: #1a1a1a;
+ :root {
+  --vino: #5a0f1f;
+  --vino-claro: #7b1e32;
+  --militar: #4b5d3a;
+  --militar-claro: #6f7f5f;
+  --negro: #121212;
+  --crema: #f8f6f1;
   --blanco: #ffffff;
 }
 
 /* Fondo elegante */
 body {background: linear-gradient(135deg, #f5f5f5, #e8efe8);}
 /* Header más premium */
-header { background: linear-gradient(90deg, var(--vino), var(--negro)); letter-spacing: 1px;}
+header { background: linear-gradient(135deg, var(--vino), var(--militar));
+  color: var(--blanco); padding: 30px; text-align: center;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
 /* Tarjetas elegantes */
-.card {border-left: 5px solid var(--matcha); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+.card { background: white; padding: 15px; margin: 12px 0;
+  border-radius: 16px; border-left: 6px solid var(--militar);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+  animation: fadeIn 0.3s ease;
+}
 /* Botones pro */
-.button { background: linear-gradient(90deg, var(--vino), #a4161a); transition: 0.3s; }
-.button:hover { transform: scale(1.05); background: var(--matcha);}
+.button { background: linear-gradient(90deg, var(--vino), var(--vino-claro));
+  color: white; padding: 12px 18px; border-radius: 10px; border: none;
+  font-weight: bold; cursor: pointer; }
+.button:hover { background: linear-gradient(90deg, var(--militar), var(--militar-claro));
+  transform: scale(1.03); }
 /* Títulos */
 h2 {color: var(--vino);}
 
@@ -317,7 +329,7 @@ window.votar = async function(opcion) {
   const ref = doc(db, "encuestas", "menu-semana");
   const nombres = { '1': 'Tacos', '2': 'Sopes', '3': 'Tinga' };
   try {
-    await updateDoc(ref, {[nombres[opcion]]: increment(1) });
+    await setDoc(ref, { [nombres[opcion]]: increment(1) }, { merge: true });
     localStorage.setItem("yaVoto", "true");
     alert("¡Gracias por votar!");
   } catch(e) { alert("Error al votar: " + e.message);   }
@@ -346,7 +358,7 @@ window.votar = async function(opcion) {
         tiempo: tiempo,
         estado: "En preparación",
         timestamp: Date.now(),
-        extraLibre: comentario,
+        extraLibre: extraLibre,
         tipoCliente: nuevoTipo,
       });
       const mensaje = document.createElement("div");
@@ -366,9 +378,9 @@ window.votar = async function(opcion) {
 onSnapshot(q, (snapshot) => {
     const pedidosArr = [];
     const horariosOcupados = [];
-    const lista = document.getElementById("listaPedidos");
+        const lista = document.getElementById("listaPedidos");
     lista.innerHTML = ""; // Limpiamos la lista antes de actualizar
-    
+ 
    snapshot.forEach((doc) => {
       const data = doc.data();
       pedidosArr.push({ id: doc.id, ...data });
@@ -379,6 +391,9 @@ onSnapshot(q, (snapshot) => {
       }
     });
   renderizarPedidos(pedidosArr);
+  //Sonido cuando llega pedido
+const audio = new Audio("https://www.soundjay.com/buttons/sounds/button-3.mp3");
+audio.play();
     actualizarEstado(pedidosArr.length);
     bloquearHorariosOcupados(horariosOcupados);
 });
@@ -521,9 +536,8 @@ document.getElementById("producto").addEventListener("change", function() {
           return "Inicial"; }
 
   window.cancelarPedido = async function(id) {
-  const password = prompt("Ingresa contraseña para cancelar:");
-  const passAdmin = prompt("Clave segura:");
-  if(password === passAdmin) {
+  const password = prompt("Ingresa contraseña:");
+if(password === "medica2024") {
     if(confirm("¿Seguro que quieres eliminar este pedido?")) {
       await deleteDoc(doc(db, "pedidos", id));  }
   } else {
@@ -562,10 +576,8 @@ function colorEstado(estado) {
 }
 
 //Auto-scroll a pedidos nuevos
+const contenedor = document.getElementById("listaPedidos");
 contenedor.scrollTop = contenedor.scrollHeight;
-//Sonido cuando llega pedido
-const audio = new Audio("https://www.soundjay.com/buttons/sounds/button-3.mp3");
-audio.play();
 
 </script>
 
