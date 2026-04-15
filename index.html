@@ -369,6 +369,7 @@ window.votar = async function(opcion) {
     const nombre = document.getElementById("nombre").value;
     const producto = document.getElementById("producto").value;
     const propina = parseFloat(prompt("¿Deseas agregar propina?")) || 0;
+   totalCarrito += propina;
     const montoCompra = 10;
     const tiempo = document.getElementById("tiempo").value;
     const extraLibre = document.getElementById("extraLibre").value;
@@ -631,18 +632,36 @@ document.addEventListener("keydown", function(e){
 };
 
 let carrito = [];
+let totalCarrito = 0;
+
+  const precios = {
+  "Café": 25,
+  "Té": 20,
+  "Licuado": 35,
+  "Papas": 18,
+  "Galletas": 15,
+  "Chicles": 10,
+  "Chilaquiles": 60,
+  "Molletes": 50,
+  "Sandwich": 45
+};
 
 function agregarAlCarrito(producto) {
   carrito.push(producto);
-  actualizarCarritoVisual();}
+  totalCarrito += precios[producto] || 0;
+  actualizarCarritoVisual();
+}
 
 function actualizarCarritoVisual() {
   const div = document.getElementById("carritoVisual");
   if(carrito.length === 0){
     div.innerHTML = "No hay productos agregados.";
-    return; }
-
-  div.innerHTML = carrito.map(p => `☕ ${p}`).join("<br>");
+    return;  }
+  div.innerHTML = `
+    ${carrito.map(p => `☕ ${p} - $${precios[p]}`).join("<br>")}
+    <hr>
+    <strong>Total: $${totalCarrito}</strong>
+  `;
 }
 
 function colorEstado(estado) {
