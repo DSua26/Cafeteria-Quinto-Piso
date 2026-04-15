@@ -384,9 +384,9 @@ window.votar = async function(opcion) {
       });
       const nuevoSnap = await getDoc(doc(db, "clientes", nombre));
       const data = nuevoSnap.data();
-      const nuevoTipo = calcularTipoCliente(data.pedidos, data.propinas), aplicarTemaCliente(nuevoTipo);
+     const nuevoTipo = calcularTipoCliente(data.pedidos, data.propinas);
+      aplicarTemaCliente(nuevoTipo);
       cambiarEstiloTarjetas(nuevoTipo);
-      mostrarPromoExclusiva(nuevoTipo);
       await updateDoc(doc(db, "clientes", nombre), {
       tipo: nuevoTipo });
       await addDoc(collection(db, "pedidos"), {
@@ -486,17 +486,17 @@ async function obtenerCliente(nombre) {
         <p style="margin: 8px 0;">☕ <b>Producto:</b> ${p.producto}</p>
         <p style="margin: 4px 0; font-size: 0.9em; color: #666;">🕒 Programado: ${p.tiempo}</p>
         <p style="margin: 4px 0; font-size: 0.9em; color: #007bff;">🔢 Turno: #${index + 1} (Espera: ${ (index + 1) * 5 } min)</p>
-        <button onclick="cancelarPedido('${p.id}')" style="background: #ff4d4d; color: white; border: none; padding: 8px;
-            border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px;">
-            Cancelar Pedido
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button onclick="cancelarPedido('${p.id}')" class="button">
+          ❌ Cancelar
+          </button>
         <button onclick="cambiarEstado('${p.id}','En camino')" class="button">
-      🚚 En camino
-          </button>
-
-        <button onclick="cambiarEstado('${p.id}','Listo para recoger')" class="button">
-      ✅ Listo
-          </button>
+          🚚 En camino
         </button>
+        <button onclick="cambiarEstado('${p.id}','Listo para recoger')" class="button">
+          ✅ Listo
+        </button>
+</div>
       `;
       contenedor.appendChild(div);    });
   }
@@ -642,13 +642,14 @@ if(password === "medica2024") {
     location.reload();
   } }, 60000);
 
-  window.modoAdmin = function() {
 document.addEventListener("keydown", function(e){
   if(e.ctrlKey && e.shiftKey && e.key === "A"){
     document.getElementById("adminBtn").style.display = "block";
     alert("Modo admin visible");
   }
-});    
+});
+  
+  window.modoAdmin = function() {
   const pass = prompt("Contraseña de administrador:");
   if(pass === "medica2024") {
     alert("Modo creador activado");
