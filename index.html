@@ -328,7 +328,7 @@ h2 { color: #f8f6f1;}
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import {getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, increment, 
-          setDoc, getDoc} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js" ;
+          setDoc, getDoc, getDocs} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js" ;
 
 //Base de datos aplicada a la web 
   const firebaseConfig = {
@@ -385,6 +385,7 @@ window.votar = async function(opcion) {
       const nuevoSnap = await getDoc(doc(db, "clientes", nombre));
       const data = nuevoSnap.data();
       const nuevoTipo = calcularTipoCliente(data.pedidos, data.propinas), aplicarTemaCliente(nuevoTipo);
+      cambiarEstiloTarjetas(nuevoTipo);
       mostrarPromoExclusiva(nuevoTipo);
       await updateDoc(doc(db, "clientes", nombre), {
       tipo: nuevoTipo });
@@ -497,8 +498,7 @@ async function obtenerCliente(nombre) {
           </button>
         </button>
       `;
-      contenedor.appendChild(div);
-    });
+      contenedor.appendChild(div);    });
   }
 
   window.cambiarEstado = async function(id, nuevoEstado){
@@ -507,9 +507,14 @@ async function obtenerCliente(nombre) {
   });
 
   if(nuevoEstado === "Listo para recoger"){
-    mostrarToast("🔔 Pedido listo para recoger");
-  }
-};
+  mostrarToast("🔔 Pedido listo para recoger");
+  const calificacion = prompt("Califica el servicio del 1 al 5 estrellas:");
+    if(calificacion){
+    await updateDoc(doc(db,"pedidos",id),{
+      calificacion: calificacion    });
+      }
+    }
+  };
 
   function actualizarEstado(total) {
     const el = document.getElementById("estadoServicio");
@@ -591,12 +596,37 @@ document.getElementById("producto").addEventListener("change", function() {
   
   function aplicarTemaCliente(tipo){
   const body = document.body;
-  if(tipo === "Inicial"){ body.style.background = "#4b5d3a"; }
-  if(tipo === "Normal"){ body.style.background = "#ffffff";  }
-  if(tipo === "Favorito"){ body.style.background = "#5a0f1f";  }
-  if(tipo === "VIP"){ body.style.background = "#111111"; }
-}
+  if(tipo === "Inicial"){
+    body.style.backgroundImage = "url('verde1.jpg')";   }
+  if(tipo === "Normal"){
+    body.style.backgroundImage = "url('blanco1.jpg')";  }
+  if(tipo === "Favorito"){
+    body.style.backgroundImage = "url('vino1.jpg')";  }
+  if(tipo === "VIP"){
+    body.style.backgroundImage = "url('negrovip1.jpg')";  }
+  body.style.backgroundSize = "cover";
+  body.style.backgroundPosition = "center";
+  body.style.backgroundAttachment = "fixed";  }
 
+function cambiarEstiloTarjetas(tipo){
+  const cards = document.querySelectorAll(".card");
+  cards.forEach(card => {
+    if(tipo === "Inicial"){
+      card.style.background = "#e8f5e9";
+      card.style.color = "#1b5e20";    }
+    if(tipo === "Normal"){
+      card.style.background = "#ffffff";
+      card.style.color = "#222";    }
+    if(tipo === "Favorito"){
+      card.style.background = "#7b1e32";
+      card.style.color = "white";    }
+    if(tipo === "VIP"){
+      card.style.background = "#121212";
+      card.style.color = "#f8f6f1";    }
+  });
+}
+  
+    
   window.cancelarPedido = async function(id) {
   const password = prompt("Ingresa contraseña:");
 if(password === "medica2024") {
@@ -631,6 +661,14 @@ document.addEventListener("keydown", function(e){
     alert("Acceso denegado"); }
 };
 
+window.verClientes = async function(){
+  const snapshot = await getDocs(collection(db,"clientes"));
+  let lista = "CLIENTES REGISTRADOS:\n\n";
+  snapshot.forEach(docSnap=>{
+    const c = docSnap.data();
+    lista += `${c.nombre} → ${c.tipo}\n`;  });
+  alert(lista); };
+  
 let carrito = [];
 let totalCarrito = 0;
 
@@ -712,5 +750,11 @@ contenedor.scrollTop = contenedor.scrollHeight;
   <button id="adminBtn" style="display:none;" onclick="modoAdmin()">
 ⚙️
 </button>
+
+  <button onclick="verClientes()" 
+style="position:fixed; bottom:60px; right:10px; background:darkred; color:white;">
+👥
+</button>
+  
 </body>
 </html>
