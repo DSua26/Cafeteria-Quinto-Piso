@@ -5,9 +5,34 @@
 <title>Cafetería El Quinto Piso</title>
 
 <style>
-body { font-family: Arial, sans-serif;
-  margin: 0; color: white;
-  background: linear-gradient(135deg, #2f3e2c, #5a0f1f); }
+body{   font-family: Arial, sans-serif;
+  margin: 0;  background: #f4f1ec; /* beige elegante */
+  color: #2c2c2c; }
+
+  <div id="loginPantalla" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.9);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:9999;
+flex-direction:column;
+color:white;
+">
+
+<h2>☕ Bienvenido a Cafetería El Quinto Piso</h2>
+
+<input id="loginNombre" placeholder="Escribe tu nombre"
+style="padding:12px; border-radius:8px; border:none; width:250px; margin:10px;">
+
+<button class="button" onclick="iniciarSesion()">
+Entrar
+</button>
+</div>
 
 /* Variables */
 :root {
@@ -21,23 +46,18 @@ body { font-family: Arial, sans-serif;
 }
 
 /* Header premium */
-header {
-  background: linear-gradient(135deg, var(--vino), var(--militar));
-  color: white; padding: 30px; text-align: center;
-  box-shadow: 0 6px 15px rgba(0,0,0,0.25);}
+header {  background: #5a0f1f; /* vino sólido */
+  color: white;  padding: 30px;  text-align: center;}
 
 /* Secciones */
 section { padding: 20px;}
 
 /* Tarjetas */
-.card {
-  background: rgba(255,255,255,0.92);
-  color: #222; padding: 15px;
-  margin: 12px 0; border-radius: 16px;
-  border-left: 6px solid var(--militar);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
-  animation: fadeIn 0.3s ease; }
-
+.card {  background: #ffffff;
+  color: #333;  padding: 15px;
+  margin: 12px 0;  border-radius: 12px;
+  border: 1px solid #e0ddd7;}
+  
 /* Botones */
 .button {
   background: linear-gradient(90deg, var(--vino), var(--vino-claro));
@@ -104,6 +124,13 @@ h2 { color: #f8f6f1;}
     👔Combo Ejecutivo: Comida + Agua + Postre $120
   </div>
 </section>
+
+<section>
+  <h2>🏆 Ranking semanal</h2>
+  <div id="rankingClientes" class="card">
+    Cargando ranking...
+  </div>
+</section>
   
 <section>
     <h2>📋 Menú</h2>
@@ -111,7 +138,7 @@ h2 { color: #f8f6f1;}
     <div class="menu-categorias">
 
         <div class="categoria">
-            <h3 onclick="toggleMenu('snack')">🍟 Snacks</h3>
+            <h3 onclick="toggleMenu('snack')"> Snacks</h3>
             <div id="snack" class="contenido">
                 <div class="card">Papas</div>
                 <div class="card">Galletas</div>
@@ -120,7 +147,7 @@ h2 { color: #f8f6f1;}
         </div>
 
         <div class="categoria">
-            <h3 onclick="toggleMenu('comida')">🍽️ Comida</h3>
+            <h3 onclick="toggleMenu('comida')"> Comida</h3>
             <div id="comida" class="contenido">
                 <div class="card">Chilaquiles</div>
                 <div class="card">Molletes</div>
@@ -129,7 +156,7 @@ h2 { color: #f8f6f1;}
         </div>
       
         <div class="categoria">
-            <h3 onclick="toggleMenu('bebida')">🥤 Bebidas</h3>
+            <h3 onclick="toggleMenu('bebida')"> Bebidas</h3>
             <div id="bebida" class="contenido">
                 <div class="card">Café</div>
                 <div class="card">Té</div>
@@ -165,7 +192,7 @@ h2 { color: #f8f6f1;}
     
     <h3>Nuevo Pedido</h3>
 
-    <input id="nombre" placeholder="Nombre y Apellido"><br><br>
+    <input id="nombre" placeholder="Nombre y Apellido" disabled><br><br>
     <input id="piso" placeholder="Piso"><br><br>
 
     <select id="zona">
@@ -342,6 +369,8 @@ h2 { color: #f8f6f1;}
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  let usuarioActual = "";
+  let esAdmin = false;
 
   window.toggleMenu = (id) => {
     const seccion = document.getElementById(id);
@@ -351,6 +380,37 @@ h2 { color: #f8f6f1;}
  window.mostrarFormulario = () => {
     document.getElementById("formulario").style.display = "block";
   };
+
+  window.iniciarSesion = async function(){
+  let nombre = document.getElementById("loginNombre").value.trim();
+  if(!nombre){
+    alert("Escribe tu nombre");
+    return;  }
+  nombre = nombre.toUpperCase();
+  usuarioActual = nombre;
+  localStorage.setItem("usuarioActual", nombre);
+  const cliente = await obtenerCliente(nombre);
+  aplicarTemaCliente(cliente.tipo);
+  mostrarBienvenida(cliente);
+  cambiarEstiloTarjetas(cliente.tipo);
+  document.getElementById("loginPantalla").style.display = "none"; 
+  document.getElementById("nombre").value = nombre;};
+
+  window.cerrarSesion = function(){
+  localStorage.removeItem("usuarioActual");
+  usuarioActual = "";
+  location.reload();
+};
+
+  window.onload = async function(){
+  const guardado = localStorage.getItem("usuarioActual");
+  if(guardado){
+    usuarioActual = guardado;
+    const cliente = await obtenerCliente(guardado);
+    aplicarTemaCliente(cliente.tipo);
+    cambiarEstiloTarjetas(cliente.tipo);
+    document.getElementById("loginPantalla").style.display = "none";  }
+};
   
 // Votar menu de la semana próxima
 window.votar = async function(opcion) {
@@ -366,7 +426,7 @@ window.votar = async function(opcion) {
 };
 
  window.hacerPedido = async () => {
-    const nombre = document.getElementById("nombre").value;
+    const nombre = usuarioActual;
     const producto = document.getElementById("producto").value;
     const propina = parseFloat(prompt("¿Deseas agregar propina?")) || 0;
    totalCarrito += propina;
@@ -378,9 +438,12 @@ window.votar = async function(opcion) {
       const cliente = await obtenerCliente(nombre);
       // Actualizar pedidos
       await updateDoc(doc(db, "clientes", nombre), {
-      pedidos: increment(1),
-      compras: increment(montoCompra),
-      propinas: increment(propina)
+        pedidos: increment(1),
+        compras: increment(montoCompra),
+        propinas: increment(propina),
+        pedidosSemana: increment(1),
+        comprasSemana: increment(montoCompra),
+        propinasSemana: increment(propina)
       });
       const nuevoSnap = await getDoc(doc(db, "clientes", nombre));
       const data = nuevoSnap.data();
@@ -421,11 +484,9 @@ onSnapshot(q, (snapshot) => {
    snapshot.forEach((doc) => {
       const data = doc.data();
       pedidosArr.push({ id: doc.id, ...data });
-      
       // Lógica de horarios ocupados
       if(data.tiempo && data.tiempo !== "Lo más pronto posible"){
-          horariosOcupados.push(data.tiempo);
-      }
+          horariosOcupados.push(data.tiempo);      }
     });
   renderizarPedidos(pedidosArr);
   //Sonido cuando llega pedido
@@ -457,6 +518,9 @@ async function obtenerCliente(nombre) {
       pedidos: 0,
       compras: 0,
       propinas: 0,
+      pedidosSemana: 0,
+      comprasSemana: 0,
+      propinasSemana: 0,
       tipo: "Inicial"
     });
     return { nombre, pedidos: 0, propinas: 0, tipo: "Inicial" };   }
@@ -467,22 +531,21 @@ async function obtenerCliente(nombre) {
   function renderizarPedidos(lista) {
     const contenedor = document.getElementById("listaPedidos");
     contenedor.innerHTML = "";
-
     if (lista.length === 0) {
       contenedor.innerHTML = "<p style='text-align:center;'>No hay pedidos pendientes.</p>";
-      return;
-    }
-
+      return;    }
     lista.forEach((p, index) => {
       const div = document.createElement("div");
       div.style = "border: 1px solid #ddd; padding: 15px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); background: white; color: #333;";
-
       div.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <b>👤 ${p.nombre}</b>
-            <span style="font-size: 0.8em; color: #888;">(${p.tipoCliente || "..."})</span>
-            <span style="background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 4px; font-size: 0.8em;">${p.estado}</span>
-        </div>
+        ${esAdmin ? `
+          <div style="margin-top:10px;">
+            <button onclick="cambiarEstado('${p.id}','En preparación')" class="button">🍳 Iniciar</button>
+            <button onclick="cambiarEstado('${p.id}','Listo para recoger')" class="button">✅ Listo</button>
+            <button onclick="cambiarEstado('${p.id}','En camino')" class="button">🚚 En camino</button>
+            <button onclick="entregarPedido('${p.id}')" class="button">📦 Entregado</button>
+          </div>
+        ` : ""}
         <p style="margin: 8px 0;">☕ <b>Producto:</b> ${p.producto}</p>
         <p style="margin: 4px 0; font-size: 0.9em; color: #666;">🕒 Programado: ${p.tiempo}</p>
         <p style="margin: 4px 0; font-size: 0.9em; color: #007bff;">🔢 Turno: #${index + 1} (Espera: ${ (index + 1) * 5 } min)</p>
@@ -636,21 +699,22 @@ if(password === "medica2024") {
     alert("Contraseña incorrecta"); }
 };
 
-    setInterval(() => {
+    setInterval(()=>{
   const ahora = new Date();
-  if(ahora.getHours() === 8 && ahora.getMinutes() === 0) {
-    location.reload();
-  } }, 60000);
+  // Lunes 00:00
+  if(ahora.getDay() === 1 && ahora.getHours() === 0 && ahora.getMinutes() === 0){
+    resetSemanal();  }
+},60000);
 
 document.addEventListener("keydown", function(e){
   if(e.ctrlKey && e.shiftKey && e.key === "A"){
     document.getElementById("adminBtn").style.display = "block";
-    alert("Modo admin visible");
-  }
-});
+    alert("Modo admin visible");   }
+  });
   
   window.modoAdmin = function() {
   const pass = prompt("Contraseña de administrador:");
+    esAdmin = true;
   if(pass === "medica2024") {
     alert("Modo creador activado");
     const nombre = prompt("Nombre del cliente a modificar:");
@@ -669,6 +733,39 @@ window.verClientes = async function(){
     const c = docSnap.data();
     lista += `${c.nombre} → ${c.tipo}\n`;  });
   alert(lista); };
+
+  window.verEstadisticasCliente = async function(){
+  if(!usuarioActual){
+    alert("No hay sesión activa");
+    return;  }
+  const snap = await getDoc(doc(db,"clientes",usuarioActual));
+  if(!snap.exists()){
+    alert("Cliente no encontrado");
+    return;  }
+  const c = snap.data();
+  alert(`
+📊 ESTADÍSTICAS SEMANALES
+
+👤 Cliente: ${c.nombre}
+🛒 Pedidos: ${c.pedidosSemana}
+💰 Compras: $${c.comprasSemana}
+🎁 Propinas: $${c.propinasSemana}
+⭐ Nivel: ${c.tipo}
+  `); };
+
+  window.borrarCliente = async function(){
+  const pass = prompt("Contraseña de administrador:");
+  if(pass !== "medica2024"){
+    alert("Acceso denegado");
+    return;  }
+
+  const nombre = prompt("Nombre exacto del cliente a borrar:");
+
+  if(!nombre) return;
+
+  await deleteDoc(doc(db,"clientes",nombre));
+  alert("Cliente eliminado correctamente");
+};
   
 let carrito = [];
 let totalCarrito = 0;
@@ -742,19 +839,99 @@ function mostrarPromoExclusiva(tipo){
     promo = "👑 VIP: Combo premium con 20% descuento";  }
   mostrarToast(promo); }
 
+  function mostrarBienvenida(cliente){
+  let mensaje = `☕ Bienvenido ${cliente.nombre}`;
+  if(cliente.tipo === "VIP"){
+    mensaje = `👑 Bienvenido VIP ${cliente.nombre}, disfruta tus privilegios exclusivos`;   }
+  if(cliente.tipo === "Favorito"){
+    mensaje = `🍷 Hola Favorito ${cliente.nombre}, tenemos promociones especiales para ti`;  }
+
+  mostrarToast(mensaje);
+}
+
 //Auto-scroll a pedidos nuevos
 const contenedor = document.getElementById("listaPedidos");
 contenedor.scrollTop = contenedor.scrollHeight;
 
-</script>
+  
+  async function resetSemanal(){
+  const snapshot = await getDocs(collection(db,"clientes"));
+  snapshot.forEach(async (docSnap)=>{
+    await updateDoc(doc(db,"clientes",docSnap.id),{
+      pedidosSemana: 0,
+      comprasSemana: 0,
+      propinasSemana: 0,
+      tipo: "Inicial" 
+    });
+  });
+  // Reset votos
+  await setDoc(doc(db,"encuestas","menu-semana"),{
+    Tacos: 0,
+    Sopes: 0,
+    Tinga: 0
+  });
+  alert("Reinicio semanal completo"); }
 
+window.entregarPedido = async function(id){
+  if(!esAdmin){
+    alert("Solo admin puede hacer esto");
+    return;  }
+  const confirmacion = confirm("¿Pedido entregado?");
+  if(!confirmacion) return;
+  const propinaExtra = parseFloat(prompt("Propina adicional del cliente?")) || 0;
+  const pedidoRef = doc(db,"pedidos",id);
+  const snap = await getDoc(pedidoRef);
+  const data = snap.data();
+  // sumar propina al cliente
+  await updateDoc(doc(db,"clientes",data.nombre),{
+    propinas: increment(propinaExtra),
+    propinasSemana: increment(propinaExtra)
+  });
+  await deleteDoc(pedidoRef);
+  alert("Pedido finalizado correctamente");};
+
+  
+function renderRanking(clientes){
+  const div = document.getElementById("rankingClientes");
+  if(clientes.length === 0){
+    div.innerHTML = "No hay datos aún.";
+    return;  }
+  let html = "";
+  clientes.slice(0,5).forEach((c,i)=>{
+    html += `
+      <div style="padding:8px; border-bottom:1px solid #eee;">
+        <strong>${i+1}. ${c.nombre}</strong> 
+        - $${c.comprasSemana || 0}
+      </div>
+    `;
+  });
+  div.innerHTML = html;}
+  
+
+</script>
+  
+<button onclick="cerrarSesion()" 
+style="position:fixed; top:10px; right:10px; background:#5a0f1f; color:white; padding:10px; border:none; border-radius:8px;">
+🚪 Cerrar sesión
+</button>
+  
   <button id="adminBtn" style="display:none;" onclick="modoAdmin()">
 ⚙️
 </button>
 
-  <button onclick="verClientes()" 
+   <button onclick="verClientes()" 
 style="position:fixed; bottom:60px; right:10px; background:darkred; color:white;">
 👥
+</button>
+
+  <button onclick="verEstadisticasCliente()" 
+style="position:fixed; bottom:160px; right:10px; background:green; color:white;">
+📊
+</button>
+
+  <button onclick="borrarCliente()" 
+style="position:fixed; bottom:110px; right:10px; background:black; color:white;">
+🗑️
 </button>
   
 </body>
