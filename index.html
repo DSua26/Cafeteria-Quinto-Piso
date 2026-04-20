@@ -570,7 +570,8 @@ async function obtenerCliente(nombre) {
       contenedor.appendChild(div);    });
     //Auto-scroll a pedidos nuevos
 const contenedor = document.getElementById("listaPedidos");
-contenedor.scrollTop = contenedor.scrollHeight;
+setTimeout(()=>{   contenedor.scrollTop = contenedor.scrollHeight;
+}, 200);
   }
 
   window.cambiarEstado = async function(id, nuevoEstado){
